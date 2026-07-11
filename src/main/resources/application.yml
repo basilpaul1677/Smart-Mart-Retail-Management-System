@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: shopping-cart-backend
+
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+logging:
+  level:
+  
+    root: INFO
+    "[com.basil.shoppingcart]": DEBUG
+    "[org.springframework.security]": INFO
+    "[org.hibernate.SQL]": DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+
+
+
+app:
+  jwt:
+    secret: ReplaceThisWithYourVeryLongSecretKeyAtLeast256BitsLongForDevelopmentOnly
+    expiration: 86400000
+
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://localhost:3000
