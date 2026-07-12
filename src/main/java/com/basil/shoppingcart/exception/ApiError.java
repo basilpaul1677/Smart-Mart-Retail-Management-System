@@ -9,14 +9,14 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ApiError {
 
-    private LocalDateTime timestamp;
+    private final LocalDateTime timestamp;
 
-    private int status;
+    private final int status;
 
-    private String error;
+    private final String error;
 
-    private String message;
+    private final String message;
 
-    private String path;
+    private final String path;
 
 }
