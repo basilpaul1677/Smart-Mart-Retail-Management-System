@@ -42,8 +42,7 @@ public class SecurityConfig {
                 )
 
                 // Disable default login page
-                .httpBasic(Customizer.withDefaults())
-
+                .httpBasic(httpBasic -> httpBasic.disable())
                 // Disable form login
                 .formLogin(form -> form.disable());
 
