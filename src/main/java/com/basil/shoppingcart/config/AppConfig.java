@@ -1,25 +1,49 @@
 package com.basil.shoppingcart.config;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
+@RequiredArgsConstructor
 public class AppConfig {
 
+    private final UserDetailsService userDetailsService;
+
+    private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Authentication Provider
+     */
     @Bean
-    CommandLineRunner verifyApplication() {
+    AuthenticationProvider authenticationProvider() {
 
-        return args -> {
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider();
 
-            System.out.println();
-            System.out.println("=====================================");
-            System.out.println("Shopping Cart Backend Started");
-            System.out.println("=====================================");
-            System.out.println();
+        provider.setUserDetailsService(userDetailsService);
 
-        };
+        provider.setPasswordEncoder(passwordEncoder);
 
+        return provider;
+    }
+
+    /**
+     * Authentication Manager
+     */
+    @Bean
+    AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration)
+            throws Exception {
+
+        return configuration.getAuthenticationManager();
     }
 
 }
