@@ -29,8 +29,8 @@ springdoc:
 
 app:
   jwt:
-  secret: 7P2mV9QxL4nF8sR1aB6tY3uK5wE0iZ7cH2dN9pQ4vX8jM1oL6kR3sT5uY7wA9bC
-  expiration: 86400000
+    secret: 7P2mV9QxL4nF8sR1aB6tY3uK5wE0iZ7cH2dN9pQ4vX8jM1oL6kR3sT5uY7wA9bC
+    expiration: 86400000
 
   cors:
     allowed-origins:

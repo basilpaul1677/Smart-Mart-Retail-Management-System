@@ -16,7 +16,9 @@ import com.basil.shoppingcart.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PostConstruct;
+    import lombok.RequiredArgsConstructor;
+
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,13 @@ public class JwtService {
                 .signWith(getSigningKey())
                 .compact();
     }
+
+
+@PostConstruct
+public void init() {
+    System.out.println("JWT Secret = " + jwtProperties.getSecret());
+    System.out.println("JWT Expiration = " + jwtProperties.getExpiration());
+}
 
     /**
      * Extract Username

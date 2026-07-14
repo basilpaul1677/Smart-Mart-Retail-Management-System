@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -25,61 +26,40 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
+    http
 
-                // Disable CSRF
-                .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
 
-                // Exception Handling
-                .exceptionHandling(exception ->
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                        exception.authenticationEntryPoint(authenticationEntryPoint))
+            .authorizeHttpRequests(auth -> auth
 
-                // Stateless Session
-                .sessionManagement(session ->
+                    .requestMatchers(
+                            "/api/auth/**",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/v3/api-docs/**"
+                    ).permitAll()
 
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .anyRequest().authenticated()
+            )
 
-                // Authorization
-                .authorizeHttpRequests(auth -> auth
+            .authenticationProvider(authenticationProvider)
 
-                        .requestMatchers(
+            .addFilterBefore(
+                    jwtAuthenticationFilter,
+                    UsernamePasswordAuthenticationFilter.class
+            )
 
-                                "/api/auth/**",
+            .httpBasic(httpBasic -> httpBasic.disable())
 
-                                "/swagger-ui/**",
+            .formLogin(form -> form.disable());
 
-                                "/swagger-ui.html",
-
-                                "/v3/api-docs/**"
-
-                        ).permitAll()
-
-                        .anyRequest()
-
-                        .authenticated())
-
-                // Authentication Provider
-                .authenticationProvider(authenticationProvider)
-
-                // JWT Filter
-                .addFilterBefore(
-
-                        jwtAuthenticationFilter,
-
-                        UsernamePasswordAuthenticationFilter.class)
-
-                // Disable Form Login
-                .formLogin(form -> form.disable())
-
-                // Disable HTTP Basic
-                .httpBasic(httpBasic -> httpBasic.disable());
-
-        return http.build();
-
-    }
+    return http.build();
+}
 
 }
