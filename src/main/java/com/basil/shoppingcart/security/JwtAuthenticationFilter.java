@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-
+System.out.println("Authorization Header : " + authHeader);
         if (!StringUtils.hasText(authHeader)
                 || !authHeader.startsWith("Bearer ")) {
 
@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwt = authHeader.substring(7);
-
+System.out.println("JWT Token : " + jwt);
         String username = jwtService.extractUsername(jwt);
 
         if (username != null
