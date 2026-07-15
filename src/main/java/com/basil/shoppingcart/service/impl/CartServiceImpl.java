@@ -82,36 +82,91 @@ public class CartServiceImpl implements CartService {
         return convertToResponse(cart);
     }
 
+        @Override
+        public CartResponse getMyCart() 
+        {
+                User user = getLoggedInUser();
+                Cart cart = cartRepository.findByUser(user)
+                                .orElseThrow(() ->
+                                new RuntimeException("Cart is empty"));
+
+                calculateCartTotal(cart);
+                return convertToResponse(cart);
+        }
+
 @Override
-public CartResponse getMyCart() {
+@Transactional
+public CartResponse updateCartItem(
+        Long cartItemId,
+        Integer quantity) {
 
     User user = getLoggedInUser();
 
-    Cart cart = cartRepository.findByUser(user)
+    Cart cart = getOrCreateCart(user);
 
+    CartItem cartItem = cartItemRepository
+            .findById(cartItemId)
             .orElseThrow(() ->
-                    new RuntimeException("Cart is empty"));
+                    new RuntimeException("Cart item not found"));
+
+    if (!cartItem.getCart().getId().equals(cart.getId())) {
+        throw new RuntimeException("Cart item does not belong to your cart");
+    }
+
+        cartItem.setQuantity(quantity);
+        cartItemRepository.save(cartItem);
+        calculateCartTotal(cart);
+        cartRepository.save(cart);
+        return convertToResponse(cart);
+}
+
+@Override
+@Transactional
+public void removeCartItem(Long cartItemId) {
+
+    User user = getLoggedInUser();
+
+    Cart cart = getOrCreateCart(user);
+
+    CartItem cartItem = cartItemRepository
+            .findById(cartItemId)
+            .orElseThrow(() ->
+                    new RuntimeException("Cart item not found"));
+
+    // Security Check
+    if (!cartItem.getCart().getId().equals(cart.getId())) {
+        throw new RuntimeException("Cart item does not belong to your cart");
+    }
+
+    cart.getCartItems().remove(cartItem);
+
+    cartItemRepository.delete(cartItem);
 
     calculateCartTotal(cart);
 
-    return convertToResponse(cart);
+    cartRepository.save(cart);
 }
 
-    @Override
-    public CartResponse updateCartItem(Long cartItemId, Integer quantity) {
 
-        return null;
-    }
+@Override
+@Transactional
+public void clearCart() {
 
-    @Override
-    public void removeCartItem(Long cartItemId) {
+    User user = getLoggedInUser();
 
-    }
+    Cart cart = getOrCreateCart(user);
 
-    @Override
-    public void clearCart() {
+    // Delete all cart items
+    cartItemRepository.deleteAll(cart.getCartItems());
 
-    }
+    // Clear the in-memory collection
+    cart.getCartItems().clear();
+
+    // Reset total
+    cart.setTotalAmount(BigDecimal.ZERO);
+
+    cartRepository.save(cart);
+}
 
     /**
      * Get Logged-in User
