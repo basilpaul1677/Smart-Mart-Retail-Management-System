@@ -3,13 +3,12 @@ package com.basil.shoppingcart.service.impl;
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.basil.shoppingcart.specification.ProductSpecification;
 import com.basil.shoppingcart.dto.request.ProductRequest;
 import com.basil.shoppingcart.dto.response.ProductResponse;
 import com.basil.shoppingcart.exception.ResourceNotFoundException;
@@ -17,6 +16,7 @@ import com.basil.shoppingcart.mapper.ProductMapper;
 import com.basil.shoppingcart.model.Product;
 import com.basil.shoppingcart.repository.ProductRepository;
 import com.basil.shoppingcart.service.ProductService;
+import com.basil.shoppingcart.specification.ProductSpecification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,62 +75,61 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
-@Override
-@Transactional(readOnly = true)
-public Page<ProductResponse> getProducts(
-        String name,
-        String category,
-        String brand,
-        BigDecimal minPrice,
-        BigDecimal maxPrice,
-        Pageable pageable
-) {
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> getProducts(
+            String name,
+            String category,
+            String brand,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Pageable pageable
+    ) {
 
-    Specification<Product> specification =
-            ProductSpecification.isActive();
+        Specification<Product> specification =
+                ProductSpecification.isActive();
 
-    if (name != null && !name.isBlank()) {
+        if (name != null && !name.isBlank()) {
 
-        specification = specification.and(
-                ProductSpecification.hasName(name)
-        );
+            specification = specification.and(
+                    ProductSpecification.hasName(name)
+            );
+        }
+
+        if (category != null && !category.isBlank()) {
+
+            specification = specification.and(
+                    ProductSpecification.hasCategory(category)
+            );
+        }
+
+        if (brand != null && !brand.isBlank()) {
+
+            specification = specification.and(
+                    ProductSpecification.hasBrand(brand)
+            );
+        }
+
+        if (minPrice != null) {
+
+            specification = specification.and(
+                    ProductSpecification
+                            .priceGreaterThanOrEqualTo(minPrice)
+            );
+        }
+
+        if (maxPrice != null) {
+
+            specification = specification.and(
+                    ProductSpecification
+                            .priceLessThanOrEqualTo(maxPrice)
+            );
+        }
+
+        return productRepository
+                .findAll(specification, pageable)
+                .map(productMapper::toResponse);
     }
-
-    if (category != null && !category.isBlank()) {
-
-        specification = specification.and(
-                ProductSpecification.hasCategory(category)
-        );
-    }
-
-    if (brand != null && !brand.isBlank()) {
-
-        specification = specification.and(
-                ProductSpecification.hasBrand(brand)
-        );
-    }
-
-    if (minPrice != null) {
-
-        specification = specification.and(
-                ProductSpecification
-                        .priceGreaterThanOrEqualTo(minPrice)
-        );
-    }
-
-    if (maxPrice != null) {
-
-        specification = specification.and(
-                ProductSpecification
-                        .priceLessThanOrEqualTo(maxPrice)
-        );
-    }
-
-    return productRepository
-            .findAll(specification, pageable)
-            .map(productMapper::toResponse);
-}
-
 
     @Override
     public ProductResponse updateProduct(

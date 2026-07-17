@@ -19,6 +19,34 @@ public final class ProductSpecification {
                 );
     }
 
+    public static Specification<Product> hasKeyword(
+            String keyword
+    ) {
+
+        return (root, query, criteriaBuilder) -> {
+
+            String searchKeyword =
+                    "%" + keyword.toLowerCase() + "%";
+
+            return criteriaBuilder.or(
+
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    root.get("name")
+                            ),
+                            searchKeyword
+                    ),
+
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    root.get("description")
+                            ),
+                            searchKeyword
+                    )
+            );
+        };
+    }
+
     public static Specification<Product> hasName(
             String name
     ) {
