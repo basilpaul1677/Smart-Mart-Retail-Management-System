@@ -3,11 +3,11 @@ package com.basil.shoppingcart.service;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.basil.shoppingcart.dto.request.ProductRequest;
-import com.basil.shoppingcart.dto.response.ProductResponse;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.basil.shoppingcart.dto.request.ProductRequest;
+import com.basil.shoppingcart.dto.response.ProductResponse;
 
 public interface ProductService {
 
@@ -17,16 +17,20 @@ public interface ProductService {
 
     List<ProductResponse> getAllProducts();
 
-    Page<ProductResponse> getProducts(String name,
-                                        String category,
-                                        String brand,
-                                        BigDecimal minPrice,
-                                        BigDecimal maxPrice,
-                                        Pageable pageable
-                                    );
+    Page<ProductResponse> getProducts(
+            String name,
+            String category,
+            String brand,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Boolean inStock,
+            Pageable pageable
+    );
 
-    ProductResponse updateProduct(Long id, ProductRequest request);
+    ProductResponse updateProduct(
+            Long id,
+            ProductRequest request
+    );
 
     void deleteProduct(Long id);
-
 }

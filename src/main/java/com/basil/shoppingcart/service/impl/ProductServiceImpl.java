@@ -75,61 +75,90 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ProductResponse> getProducts(
-            String name,
-            String category,
-            String brand,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            Pageable pageable
-    ) {
+@Override
+@Transactional(readOnly = true)
+public Page<ProductResponse> getProducts(
+        String name,
+        String category,
+        String brand,
+        BigDecimal minPrice,
+        BigDecimal maxPrice,
+        Boolean inStock,
+        Pageable pageable
+) {
 
-        Specification<Product> specification =
-                ProductSpecification.isActive();
+    Specification<Product> specification =
+            ProductSpecification.isActive();
 
-        if (name != null && !name.isBlank()) {
+    /*
+     * Search by product name or description
+     */
+    if (name != null && !name.isBlank()) {
 
-            specification = specification.and(
-                    ProductSpecification.hasName(name)
-            );
-        }
-
-        if (category != null && !category.isBlank()) {
-
-            specification = specification.and(
-                    ProductSpecification.hasCategory(category)
-            );
-        }
-
-        if (brand != null && !brand.isBlank()) {
-
-            specification = specification.and(
-                    ProductSpecification.hasBrand(brand)
-            );
-        }
-
-        if (minPrice != null) {
-
-            specification = specification.and(
-                    ProductSpecification
-                            .priceGreaterThanOrEqualTo(minPrice)
-            );
-        }
-
-        if (maxPrice != null) {
-
-            specification = specification.and(
-                    ProductSpecification
-                            .priceLessThanOrEqualTo(maxPrice)
-            );
-        }
-
-        return productRepository
-                .findAll(specification, pageable)
-                .map(productMapper::toResponse);
+        specification = specification.and(
+                ProductSpecification.hasKeyword(name)
+        );
     }
+
+    /*
+     * Filter by category
+     */
+    if (category != null && !category.isBlank()) {
+
+        specification = specification.and(
+                ProductSpecification.hasCategory(category)
+        );
+    }
+
+    /*
+     * Filter by brand
+     */
+    if (brand != null && !brand.isBlank()) {
+
+        specification = specification.and(
+                ProductSpecification.hasBrand(brand)
+        );
+    }
+
+    /*
+     * Minimum price filter
+     */
+    if (minPrice != null) {
+
+        specification = specification.and(
+                ProductSpecification
+                        .priceGreaterThanOrEqualTo(minPrice)
+        );
+    }
+
+    /*
+     * Maximum price filter
+     */
+    if (maxPrice != null) {
+
+        specification = specification.and(
+                ProductSpecification
+                        .priceLessThanOrEqualTo(maxPrice)
+        );
+    }
+
+    /*
+     * Stock availability filter
+     */
+    if (Boolean.TRUE.equals(inStock)) {
+
+        specification = specification.and(
+                ProductSpecification.hasStock()
+        );
+    }
+
+    return productRepository
+            .findAll(
+                    specification,
+                    pageable
+            )
+            .map(productMapper::toResponse);
+}
 
     @Override
     public ProductResponse updateProduct(

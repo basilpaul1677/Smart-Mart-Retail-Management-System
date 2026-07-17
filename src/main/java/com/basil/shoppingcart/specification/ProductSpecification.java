@@ -107,4 +107,14 @@ public final class ProductSpecification {
                         maxPrice
                 );
     }
+
+    public static Specification<Product> hasStock() {
+
+    return (root, query, criteriaBuilder) ->
+            criteriaBuilder.greaterThan(
+                    root.get("quantity"),
+                    0
+            );
+}
+
 }

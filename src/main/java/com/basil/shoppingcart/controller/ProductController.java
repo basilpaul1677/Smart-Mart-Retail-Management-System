@@ -25,6 +25,8 @@ import com.basil.shoppingcart.dto.response.ProductResponse;
 import com.basil.shoppingcart.service.ProductService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -62,14 +64,29 @@ public class ProductController {
     }
 
     /**
-     * Search Product By:
-     * Name
-     * Category
-     * Brand
-     * Minimum Price
-     * Maximum Price
-     * Pagination
-     * Sorting
+     * Get Product By Id
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> getProductById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                productService.getProductById(id)
+        );
+    }
+
+    /**
+     * Search and Filter Products
+     *
+     * Supported filters:
+     * - name
+     * - category
+     * - brand
+     * - minPrice
+     * - maxPrice
+     * - inStock
+     * - pagination
+     * - sorting
      */
     @GetMapping("/search")
     public ResponseEntity<Page<ProductResponse>> searchProducts(
@@ -89,10 +106,25 @@ public class ProductController {
             @RequestParam(required = false)
             BigDecimal maxPrice,
 
+            @RequestParam(required = false)
+            Boolean inStock,
+
             @RequestParam(defaultValue = "0")
+            @Min(
+                    value = 0,
+                    message = "Page number cannot be negative"
+            )
             int page,
 
             @RequestParam(defaultValue = "10")
+            @Min(
+                    value = 1,
+                    message = "Page size must be at least 1"
+            )
+            @Max(
+                    value = 100,
+                    message = "Page size cannot exceed 100"
+            )
             int size,
 
             @RequestParam(defaultValue = "createdAt")
@@ -101,14 +133,6 @@ public class ProductController {
             @RequestParam(defaultValue = "desc")
             String direction
     ) {
-
-        if (page < 0) {
-            page = 0;
-        }
-
-        if (size <= 0) {
-            size = 10;
-        }
 
         Sort sort =
                 direction.equalsIgnoreCase("asc")
@@ -129,24 +153,11 @@ public class ProductController {
                         brand,
                         minPrice,
                         maxPrice,
+                        inStock,
                         pageable
                 )
         );
     }
-
-    /**
-     * Get Product By Id
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProductById(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                productService.getProductById(id)
-        );
-    }
-
-
 
     /**
      * Update Product
