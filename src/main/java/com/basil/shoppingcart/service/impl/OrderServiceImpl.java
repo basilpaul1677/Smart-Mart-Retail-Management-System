@@ -159,6 +159,39 @@ public class OrderServiceImpl implements OrderService {
                         new RuntimeException("User not found"));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrders() 
+    {
+        return orderRepository
+            .findAllByOrderByCreatedAtDesc()
+            .stream()
+            .map(this::convertToResponse)
+            .toList();
+    }
+
+    @Override
+    public OrderResponse updateOrderStatus(Long orderId,String status) 
+    {
+        Order order = orderRepository.findById(orderId).orElseThrow(() ->
+                                    new RuntimeException("Order not found"));
+        OrderStatus newStatus;
+        try 
+        {
+            newStatus = OrderStatus.valueOf(status.toUpperCase());
+        }
+        catch (IllegalArgumentException ex) 
+        {
+            throw new RuntimeException("Invalid order status");
+        }
+
+        order.setStatus(newStatus);
+        orderRepository.save(order);
+        return convertToResponse(order);
+    
+    }
+
+
     private Cart getCart(User user) {
 
         return cartRepository.findByUser(user)

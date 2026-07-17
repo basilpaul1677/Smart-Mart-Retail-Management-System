@@ -1,10 +1,15 @@
 package com.basil.shoppingcart.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
+import com.basil.shoppingcart.specification.ProductSpecification;
 import com.basil.shoppingcart.dto.request.ProductRequest;
 import com.basil.shoppingcart.dto.response.ProductResponse;
 import com.basil.shoppingcart.exception.ResourceNotFoundException;
@@ -29,11 +34,16 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse createProduct(ProductRequest request) {
 
-        log.info("Creating product : {}", request.getName());
+        log.info(
+                "Creating product : {}",
+                request.getName()
+        );
 
-        Product product = productMapper.toEntity(request);
+        Product product =
+                productMapper.toEntity(request);
 
-        Product savedProduct = productRepository.save(product);
+        Product savedProduct =
+                productRepository.save(product);
 
         return productMapper.toResponse(savedProduct);
     }
@@ -42,10 +52,14 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductResponse getProductById(Long id) {
 
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Product not found with id : " + id));
+        Product product =
+                productRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Product not found with id : "
+                                                + id
+                                )
+                        );
 
         return productMapper.toResponse(product);
     }
@@ -54,25 +68,92 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
 
-        return productRepository.findAll()
+        return productRepository
+                .findByActiveTrue()
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
     }
 
+@Override
+@Transactional(readOnly = true)
+public Page<ProductResponse> getProducts(
+        String name,
+        String category,
+        String brand,
+        BigDecimal minPrice,
+        BigDecimal maxPrice,
+        Pageable pageable
+) {
+
+    Specification<Product> specification =
+            ProductSpecification.isActive();
+
+    if (name != null && !name.isBlank()) {
+
+        specification = specification.and(
+                ProductSpecification.hasName(name)
+        );
+    }
+
+    if (category != null && !category.isBlank()) {
+
+        specification = specification.and(
+                ProductSpecification.hasCategory(category)
+        );
+    }
+
+    if (brand != null && !brand.isBlank()) {
+
+        specification = specification.and(
+                ProductSpecification.hasBrand(brand)
+        );
+    }
+
+    if (minPrice != null) {
+
+        specification = specification.and(
+                ProductSpecification
+                        .priceGreaterThanOrEqualTo(minPrice)
+        );
+    }
+
+    if (maxPrice != null) {
+
+        specification = specification.and(
+                ProductSpecification
+                        .priceLessThanOrEqualTo(maxPrice)
+        );
+    }
+
+    return productRepository
+            .findAll(specification, pageable)
+            .map(productMapper::toResponse);
+}
+
+
     @Override
     public ProductResponse updateProduct(
             Long id,
-            ProductRequest request) {
+            ProductRequest request
+    ) {
 
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Product not found with id : " + id));
+        Product product =
+                productRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Product not found with id : "
+                                                + id
+                                )
+                        );
 
-        productMapper.updateEntity(product, request);
+        productMapper.updateEntity(
+                product,
+                request
+        );
 
-        Product updated = productRepository.save(product);
+        Product updated =
+                productRepository.save(product);
 
         return productMapper.toResponse(updated);
     }
@@ -80,14 +161,28 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(Long id) {
 
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Product not found with id : " + id));
+        Product product =
+                productRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Product not found with id : "
+                                                + id
+                                )
+                        );
 
-        productRepository.delete(product);
+        /*
+         * Soft delete.
+         *
+         * The product remains in the database.
+         * It is only marked as inactive.
+         */
+        product.setActive(false);
 
-        log.info("Deleted Product : {}", id);
+        productRepository.save(product);
+
+        log.info(
+                "Deactivated Product : {}",
+                id
+        );
     }
-
 }

@@ -1,11 +1,16 @@
 package com.basil.shoppingcart.controller;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import com.basil.shoppingcart.dto.request.ProductRequest;
 import com.basil.shoppingcart.dto.response.ProductResponse;
@@ -58,6 +63,53 @@ public class ProductController {
                 productService.getProductById(id)
         );
     }
+
+    /**
+     * Search Product By :
+     */
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ProductResponse>> searchProducts(
+        @RequestParam(required = false)
+        String name,
+
+        @RequestParam(required = false)
+        String category,
+
+        @RequestParam(required = false)
+        String brand,
+
+        @RequestParam(required = false)
+        BigDecimal minPrice,
+
+        @RequestParam(required = false)
+        BigDecimal maxPrice,
+
+        @RequestParam(defaultValue = "0")
+        int page,
+
+        @RequestParam(defaultValue = "10")
+        int size,
+
+        @RequestParam(defaultValue = "createdAt")
+        String sortBy,
+
+        @RequestParam(defaultValue = "desc")
+        String direction ) 
+        {
+            Sort sort = direction.equalsIgnoreCase("asc")
+                        ? Sort.by(sortBy).ascending(): Sort.by(sortBy).descending();
+
+            Pageable pageable = PageRequest.of(page, size, sort);
+        
+            return ResponseEntity.ok(productService.getProducts(
+                                                                name,
+                                                                category,
+                                                                brand,
+                                                                minPrice,
+                                                                maxPrice,
+                                                                pageable));
+        }
 
     /**
      * Update Product
