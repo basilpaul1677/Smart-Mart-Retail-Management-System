@@ -2,11 +2,14 @@ package com.basil.shoppingcart.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import org.springframework.http.HttpMethod;
+
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,32 +24,93 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
-public class SecurityConfig 
-{
+public class SecurityConfig {
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
     private final AuthenticationProvider authenticationProvider;
+
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
-        @Bean
-        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception 
-        {
+    @Bean
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
 
-        http.csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                    .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            "/api/auth/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html",
-                            "/v3/api-docs/**"
-                    ).permitAll()
-                    .anyRequest().authenticated())
-                    .authenticationProvider(authenticationProvider)
-                    .addFilterBefore(jwtAuthenticationFilter,UsernamePasswordAuthenticationFilter.class)
-                    .httpBasic(httpBasic -> httpBasic.disable())
-                    .formLogin(form -> form.disable());
+        http
+                .csrf(AbstractHttpConfigurer::disable)
 
-                return http.build();
-        }
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
 
+                .authorizeHttpRequests(auth -> auth
+
+                        /*
+                         * Public APIs
+                         */
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        /*
+                         * Public Product Read APIs
+                         */
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/products",
+                                "/api/products/**"
+                        ).permitAll()
+
+                        /*
+                         * Admin Product APIs
+                         */
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/products"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/products/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/products/**"
+                        ).hasRole("ADMIN")
+
+                        /*
+                         * All remaining APIs require authentication
+                         */
+                        .anyRequest().authenticated()
+                )
+
+                .authenticationProvider(authenticationProvider)
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(
+                                authenticationEntryPoint
+                        )
+                )
+
+                .httpBasic(httpBasic ->
+                        httpBasic.disable()
+                )
+
+                .formLogin(form ->
+                        form.disable()
+                );
+
+        return http.build();
+    }
 }

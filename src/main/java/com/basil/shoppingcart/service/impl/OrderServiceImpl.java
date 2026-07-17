@@ -43,62 +43,93 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
 
     @Override
-    public OrderResponse checkout() 
-    {
+    public OrderResponse checkout() {
+
         User user = getLoggedInUser();
+
         Cart cart = getCart(user);
 
-        if (cart.getCartItems().isEmpty()) 
-        {
+        if (cart.getCartItems().isEmpty()) {
+
             throw new RuntimeException("Cart is empty");
         }
 
         Order order = new Order();
 
         order.setUser(user);
+
         order.setStatus(OrderStatus.PENDING);
+
         order.setTotalAmount(BigDecimal.ZERO);
+
         order = orderRepository.save(order);
+
         BigDecimal total = BigDecimal.ZERO;
 
-        for (CartItem cartItem : cart.getCartItems()) 
-        {
+        for (CartItem cartItem : cart.getCartItems()) {
+
             Product product = cartItem.getProduct();
 
-            if (product.getQuantity() < cartItem.getQuantity()) 
-            {
-                throw new RuntimeException("Insufficient stock for product : "+ product.getName());
+            if (product.getQuantity() < cartItem.getQuantity()) {
+
+                throw new RuntimeException(
+                        "Insufficient stock for product : "
+                                + product.getName()
+                );
             }
 
             OrderItem orderItem = new OrderItem();
+
             orderItem.setOrder(order);
+
             orderItem.setProduct(product);
+
             orderItem.setQuantity(cartItem.getQuantity());
+
             orderItem.setPrice(cartItem.getPrice());
+
             orderItemRepository.save(orderItem);
 
-            product.setQuantity(product.getQuantity() - cartItem.getQuantity());
+            product.setQuantity(
+                    product.getQuantity()
+                            - cartItem.getQuantity()
+            );
+
             productRepository.save(product);
 
-            total = total.add(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            total = total.add(
+                    cartItem.getPrice()
+                            .multiply(
+                                    BigDecimal.valueOf(
+                                            cartItem.getQuantity()
+                                    )
+                            )
+            );
         }
 
         order.setTotalAmount(total);
+
         orderRepository.save(order);
 
-        cartItemRepository.deleteAll(cart.getCartItems());
+        cartItemRepository.deleteAll(
+                cart.getCartItems()
+        );
+
         cart.getCartItems().clear();
+
         cart.setTotalAmount(BigDecimal.ZERO);
+
         cartRepository.save(cart);
 
         return convertToResponse(order);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getMyOrders() {
+
         User user = getLoggedInUser();
+
         return orderRepository
                 .findByUserOrderByCreatedAtDesc(user)
                 .stream()
@@ -106,45 +137,83 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
-
-
     @Override
     @Transactional(readOnly = true)
-    public OrderResponse getOrder(Long orderId) 
-    {
-        User user = getLoggedInUser();
-        Order order = orderRepository.findById(orderId).orElseThrow(() ->new RuntimeException("Order not found"));
+    public OrderResponse getOrder(Long orderId) {
 
-    // Customer can only view their own orders
-        if (!order.getUser().getId().equals(user.getId())) 
-        {
-            throw new RuntimeException("You are not authorized to view this order");
+        User user = getLoggedInUser();
+
+        Order order = orderRepository
+                .findById(orderId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Order not found"
+                        )
+                );
+
+        // Customer can only view their own orders
+        if (!order.getUser().getId().equals(user.getId())) {
+
+            throw new RuntimeException(
+                    "You are not authorized to view this order"
+            );
         }
+
         return convertToResponse(order);
     }
 
+    private OrderResponse convertToResponse(Order order) {
 
-    private OrderResponse convertToResponse(Order order) 
-    {
         OrderResponse response = new OrderResponse();
-        response.setOrderId(order.getId());
-        response.setStatus(order.getStatus());
-        response.setTotalAmount(order.getTotalAmount());
-        response.setCreatedAt(order.getCreatedAt());
-        response.setItems(order.getOrderItems()
-                                .stream()
-                                .map(item -> 
-                                {
-                                    OrderItemResponse dto = new OrderItemResponse();
-                                    dto.setProductId(item.getProduct().getId());
-                                    dto.setProductName(item.getProduct().getName());
-                                    dto.setQuantity(item.getQuantity());
-                                    dto.setPrice(item.getPrice());
-                                    dto.setSubTotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-                                  return dto;}).toList());
-                                return response;
-    }
 
+        response.setOrderId(order.getId());
+
+        response.setStatus(order.getStatus());
+
+        response.setTotalAmount(order.getTotalAmount());
+
+        response.setCreatedAt(order.getCreatedAt());
+
+        response.setItems(
+                order.getOrderItems()
+                        .stream()
+                        .map(item -> {
+
+                            OrderItemResponse dto =
+                                    new OrderItemResponse();
+
+                            dto.setProductId(
+                                    item.getProduct().getId()
+                            );
+
+                            dto.setProductName(
+                                    item.getProduct().getName()
+                            );
+
+                            dto.setQuantity(
+                                    item.getQuantity()
+                            );
+
+                            dto.setPrice(
+                                    item.getPrice()
+                            );
+
+                            dto.setSubTotal(
+                                    item.getPrice()
+                                            .multiply(
+                                                    BigDecimal.valueOf(
+                                                            item.getQuantity()
+                                                    )
+                                            )
+                            );
+
+                            return dto;
+                        })
+                        .toList()
+        );
+
+        return response;
+    }
 
     private User getLoggedInUser() {
 
@@ -154,48 +223,69 @@ public class OrderServiceImpl implements OrderService {
                         .getAuthentication()
                         .getPrincipal();
 
-        return userRepository.findById(principal.getUserId())
+        return userRepository
+                .findById(principal.getUserId())
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"
+                        )
+                );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrders() 
-    {
+    public List<OrderResponse> getAllOrders() {
+
         return orderRepository
-            .findAllByOrderByCreatedAtDesc()
-            .stream()
-            .map(this::convertToResponse)
-            .toList();
+                .findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
     }
 
     @Override
-    public OrderResponse updateOrderStatus(Long orderId,String status) 
-    {
-        Order order = orderRepository.findById(orderId).orElseThrow(() ->
-                                    new RuntimeException("Order not found"));
+    public OrderResponse updateOrderStatus(
+            Long orderId,
+            String status) {
+
+        Order order = orderRepository
+                .findById(orderId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Order not found"
+                        )
+                );
+
         OrderStatus newStatus;
-        try 
-        {
-            newStatus = OrderStatus.valueOf(status.toUpperCase());
-        }
-        catch (IllegalArgumentException ex) 
-        {
-            throw new RuntimeException("Invalid order status");
+
+        try {
+
+            newStatus = OrderStatus.valueOf(
+                    status.trim().toUpperCase()
+            );
+
+        } catch (IllegalArgumentException ex) {
+
+            throw new RuntimeException(
+                    "Invalid order status"
+            );
         }
 
         order.setStatus(newStatus);
-        orderRepository.save(order);
-        return convertToResponse(order);
-    
-    }
 
+        orderRepository.save(order);
+
+        return convertToResponse(order);
+    }
 
     private Cart getCart(User user) {
 
-        return cartRepository.findByUser(user)
+        return cartRepository
+                .findByUser(user)
                 .orElseThrow(() ->
-                        new RuntimeException("Cart not found"));
+                        new RuntimeException(
+                                "Cart not found"
+                        )
+                );
     }
 }
