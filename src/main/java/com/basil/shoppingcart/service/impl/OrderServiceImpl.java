@@ -24,6 +24,8 @@ import com.basil.shoppingcart.repository.OrderRepository;
 import com.basil.shoppingcart.repository.ProductRepository;
 import com.basil.shoppingcart.repository.UserRepository;
 
+import com.basil.shoppingcart.exception.ResourceNotFoundException;
+
 import com.basil.shoppingcart.security.UserPrincipal;
 
 import com.basil.shoppingcart.service.OrderService;
@@ -145,11 +147,9 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository
                 .findById(orderId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Order not found"
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException(
+                                    "Order not found with id : " + orderId));
+
 
         // Customer can only view their own orders
         if (!order.getUser().getId().equals(user.getId())) {
@@ -250,11 +250,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository
                 .findById(orderId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Order not found"
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException(
+                                    "Order not found with id : " + orderId));
 
         OrderStatus newStatus;
 
