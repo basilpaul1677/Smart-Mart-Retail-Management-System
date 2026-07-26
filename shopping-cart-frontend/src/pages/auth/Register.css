@@ -1,0 +1,32 @@
+@import "./Login.css";
+
+.register-container {
+    max-width: 620px;
+}
+
+
+.form-row {
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 16px;
+}
+
+
+.input-hint {
+    color: var(--color-text-secondary);
+
+    font-size: 0.75rem;
+
+    line-height: 1.4;
+}
+
+
+@media (max-width: 600px) {
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+}

@@ -1,0 +1,165 @@
+.product-pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 24px;
+
+    margin-top: 40px;
+
+    padding: 20px 0;
+
+}
+
+
+.pagination-button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 44px;
+
+    padding: 10px 16px;
+
+    color:
+
+        var(--color-text-primary);
+
+    background:
+
+        var(--color-surface);
+
+    border:
+
+        1px solid
+
+        var(--color-border);
+
+    border-radius:
+
+        var(--radius-md);
+
+    font-weight: 600;
+
+    transition:
+
+        background-color
+
+        0.2s
+
+        ease,
+
+        border-color
+
+        0.2s
+
+        ease,
+
+        transform
+
+        0.2s
+
+        ease;
+
+}
+
+
+.pagination-button:hover:not(:disabled) {
+
+    color:
+
+        var(--color-primary);
+
+    border-color:
+
+        var(--color-primary);
+
+    transform:
+
+        translateY(-2px);
+
+}
+
+
+.pagination-button:disabled {
+
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+}
+
+
+.pagination-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color:
+
+        var(--color-text-secondary);
+
+}
+
+
+.pagination-info strong {
+
+    min-width: 32px;
+
+    text-align: center;
+
+    color:
+
+        var(--color-primary);
+
+    font-size: 1rem;
+
+}
+
+
+@media (max-width: 600px) {
+
+
+    .product-pagination {
+
+        gap: 12px;
+
+    }
+
+
+    .pagination-button {
+
+        padding:
+
+            10px 12px;
+
+    }
+
+
+    .pagination-button {
+
+        font-size: 0;
+
+    }
+
+
+    .pagination-button svg {
+
+        width: 20px;
+
+        height: 20px;
+
+    }
+
+}

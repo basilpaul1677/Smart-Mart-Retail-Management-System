@@ -1,0 +1,67 @@
+.auth-page {
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 30px 20px;
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eff6ff 0%,
+            #f8fafc 50%,
+            #eef2ff 100%
+        );
+}
+
+.auth-container {
+    width: 100%;
+
+    max-width: 440px;
+
+    position: relative;
+
+    z-index: 2;
+}
+
+.auth-background-shape {
+    position: absolute;
+
+    border-radius: 50%;
+
+    filter: blur(1px);
+
+    opacity: 0.45;
+}
+
+.shape-one {
+    width: 320px;
+
+    height: 320px;
+
+    top: -120px;
+
+    left: -100px;
+
+    background: #dbeafe;
+}
+
+.shape-two {
+    width: 380px;
+
+    height: 380px;
+
+    right: -150px;
+
+    bottom: -150px;
+
+    background: #e0e7ff;
+}

@@ -1,0 +1,480 @@
+.products-page {
+
+    min-height: 100vh;
+
+    background:
+
+        linear-gradient(
+
+            180deg,
+
+            var(--color-background)
+
+            0%,
+
+            var(--color-surface)
+
+            100%
+
+        );
+
+}
+
+
+.products-page-header {
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 32px;
+
+    margin-bottom: 40px;
+
+}
+
+
+.products-page-header h1 {
+
+    max-width: 680px;
+
+    margin-top: 8px;
+
+    color:
+
+        var(--color-text-primary);
+
+    font-size:
+
+        clamp(
+
+            2rem,
+
+            4vw,
+
+            3.5rem
+
+        );
+
+    line-height: 1.1;
+
+    letter-spacing:
+
+        -0.04em;
+
+}
+
+
+.products-page-header p {
+
+    max-width: 600px;
+
+    margin-top: 18px;
+
+    color:
+
+        var(--color-text-secondary);
+
+    font-size:
+
+        1.05rem;
+
+}
+
+
+.products-count {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    min-width: 150px;
+
+    padding: 18px 22px;
+
+    background:
+
+        var(--color-surface);
+
+    border:
+
+        1px solid
+
+        var(--color-border);
+
+    border-radius:
+
+        var(--radius-lg);
+
+    box-shadow:
+
+        var(--shadow-sm);
+
+}
+
+
+.products-count strong {
+
+    color:
+
+        var(--color-primary);
+
+    font-size:
+
+        1.8rem;
+
+}
+
+
+.products-count span {
+
+    color:
+
+        var(--color-text-secondary);
+
+    font-size:
+
+        0.78rem;
+
+}
+
+
+/* =========================
+   Product Grid
+========================= */
+
+
+.products-grid {
+
+    display: grid;
+
+    grid-template-columns:
+
+        repeat(
+
+            4,
+
+            minmax(
+
+                0,
+
+                1fr
+
+            )
+
+        );
+
+    gap: 24px;
+
+}
+
+
+/* =========================
+   Error State
+========================= */
+
+
+.products-error {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 24px;
+
+    margin-bottom: 32px;
+
+    padding: 24px;
+
+    background:
+
+        rgba(
+
+            239,
+
+            68,
+
+            68,
+
+            0.06
+
+        );
+
+    border:
+
+        1px solid
+
+        rgba(
+
+            239,
+
+            68,
+
+            68,
+
+            0.2
+
+        );
+
+    border-radius:
+
+        var(--radius-lg);
+
+}
+
+
+.products-error h3 {
+
+    color:
+
+        var(--color-danger);
+
+}
+
+
+.products-error p {
+
+    margin-top: 6px;
+
+    color:
+
+        var(--color-text-secondary);
+
+}
+
+
+.products-error button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 44px;
+
+    padding:
+
+        10px 16px;
+
+    color: #ffffff;
+
+    background:
+
+        var(--color-danger);
+
+    border: none;
+
+    border-radius:
+
+        var(--radius-md);
+
+    font-weight: 600;
+
+}
+
+
+/* =========================
+   Empty State
+========================= */
+
+
+.products-empty {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 360px;
+
+    padding: 40px;
+
+    text-align: center;
+
+    color:
+
+        var(--color-text-secondary);
+
+    background:
+
+        var(--color-surface);
+
+    border:
+
+        1px dashed
+
+        var(--color-border);
+
+    border-radius:
+
+        var(--radius-lg);
+
+}
+
+
+.products-empty svg {
+
+    margin-bottom: 18px;
+
+    color:
+
+        var(--color-primary);
+
+}
+
+
+.products-empty h3 {
+
+    color:
+
+        var(--color-text-primary);
+
+    font-size:
+
+        1.3rem;
+
+}
+
+
+.products-empty p {
+
+    margin-top: 8px;
+
+}
+
+
+.products-empty button {
+
+    margin-top: 20px;
+
+    padding:
+
+        10px 18px;
+
+    color: #ffffff;
+
+    background:
+
+        var(--color-primary);
+
+    border: none;
+
+    border-radius:
+
+        var(--radius-md);
+
+    font-weight: 600;
+
+}
+
+
+/* =========================
+   Responsive
+========================= */
+
+
+@media (max-width: 1200px) {
+
+    .products-grid {
+
+        grid-template-columns:
+
+            repeat(
+
+                3,
+
+                minmax(
+
+                    0,
+
+                    1fr
+
+                )
+
+            );
+
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    .products-page-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+    }
+
+
+    .products-count {
+
+        align-items: flex-start;
+
+    }
+
+
+    .products-grid {
+
+        grid-template-columns:
+
+            repeat(
+
+                2,
+
+                minmax(
+
+                    0,
+
+                    1fr
+
+                )
+
+            );
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .products-grid {
+
+        grid-template-columns:
+
+            1fr;
+
+    }
+
+
+    .products-error {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+    }
+
+
+    .products-error button {
+
+        width: 100%;
+
+        justify-content: center;
+
+    }
+
+}

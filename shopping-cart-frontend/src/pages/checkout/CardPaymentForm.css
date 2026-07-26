@@ -1,0 +1,784 @@
+.card-payment-container {
+
+    padding: 32px;
+
+    background:
+        var(--color-surface);
+
+    border:
+        1px solid
+        var(--color-border);
+
+    border-radius:
+        var(--radius-lg);
+
+    box-shadow:
+        var(--shadow-md);
+
+    animation:
+        fadeInUp
+        0.5s
+        ease
+        both;
+
+}
+
+
+.card-payment-header {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 32px;
+
+}
+
+
+.card-payment-header h2 {
+
+    margin-top: 6px;
+
+    font-size: 1.8rem;
+
+}
+
+
+.card-payment-header p {
+
+    margin-top: 6px;
+
+    color:
+        var(--color-text-secondary);
+
+}
+
+
+.payment-security-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    padding:
+        8px
+        12px;
+
+    color:
+        var(--color-success);
+
+    background:
+        rgba(
+            22,
+            163,
+            74,
+            0.1
+        );
+
+    border-radius:
+        var(--radius-full);
+
+    font-size: 0.8rem;
+
+    font-weight: 700;
+
+}
+
+
+.card-payment-layout {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(
+            300px,
+            0.9fr
+        )
+        minmax(
+            320px,
+            1.1fr
+        );
+
+    gap: 40px;
+
+    align-items: center;
+
+}
+
+
+/* =========================
+   CARD PREVIEW
+========================= */
+
+
+.bank-card {
+
+    min-height: 250px;
+
+    perspective: 1000px;
+
+    cursor: pointer;
+
+    animation:
+        cardFloat
+        4s
+        ease-in-out
+        infinite;
+
+}
+
+
+.card-front,
+.card-back {
+
+    position: relative;
+
+    min-height: 250px;
+
+    padding: 28px;
+
+    overflow: hidden;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172554,
+            #1d4ed8,
+            #2563eb
+        );
+
+    border-radius:
+        22px;
+
+    box-shadow:
+        0
+        20px
+        40px
+        rgba(
+            15,
+            23,
+            42,
+            0.25
+        );
+
+}
+
+
+.card-front::before,
+.card-back::before {
+
+    position: absolute;
+
+    width: 180px;
+
+    height: 180px;
+
+    content: "";
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+
+    border-radius: 50%;
+
+    top: -70px;
+
+    right: -40px;
+
+}
+
+
+.card-front::after,
+.card-back::after {
+
+    position: absolute;
+
+    width: 160px;
+
+    height: 160px;
+
+    content: "";
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.06
+        );
+
+    border-radius: 50%;
+
+    bottom: -80px;
+
+    left: -40px;
+
+}
+
+
+.card-top-row {
+
+    position: relative;
+
+    z-index: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+}
+
+
+.card-top-row span {
+
+    font-size: 0.75rem;
+
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+}
+
+
+.card-number-preview {
+
+    position: relative;
+
+    z-index: 1;
+
+    margin-top: 48px;
+
+    font-size: 1.35rem;
+
+    font-weight: 600;
+
+    letter-spacing: 2px;
+
+}
+
+
+.card-bottom-row {
+
+    position: relative;
+
+    z-index: 1;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-top: 30px;
+
+}
+
+
+.card-bottom-row div {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+}
+
+
+.card-bottom-row small {
+
+    font-size: 0.6rem;
+
+    opacity: 0.7;
+
+}
+
+
+.card-bottom-row strong {
+
+    font-size: 0.8rem;
+
+    letter-spacing: 1px;
+
+}
+
+
+.card-back {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    padding-top: 32px;
+
+}
+
+
+.card-magnetic-strip {
+
+    position: absolute;
+
+    top: 32px;
+
+    right: 0;
+
+    left: 0;
+
+    height: 48px;
+
+    background:
+        rgba(
+            0,
+            0,
+            0,
+            0.45
+        );
+
+}
+
+
+.card-cvv-section {
+
+    position: relative;
+
+    z-index: 1;
+
+    margin-top: 72px;
+
+}
+
+
+.card-cvv-section span {
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 0.7rem;
+
+}
+
+
+.card-cvv-value {
+
+    width: 100%;
+
+    padding: 10px;
+
+    color: #111827;
+
+    background: white;
+
+    border-radius: 4px;
+
+    text-align: right;
+
+    letter-spacing: 3px;
+
+}
+
+
+.card-back small {
+
+    position: relative;
+
+    z-index: 1;
+
+    text-align: center;
+
+    opacity: 0.7;
+
+}
+
+
+/* =========================
+   FORM
+========================= */
+
+
+.card-payment-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+
+}
+
+
+.form-field {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+}
+
+
+.form-field label {
+
+    color:
+        var(--color-text-primary);
+
+    font-size: 0.85rem;
+
+    font-weight: 600;
+
+}
+
+
+.form-field input {
+
+    width: 100%;
+
+    height: 48px;
+
+    padding:
+        0
+        14px;
+
+    color:
+        var(--color-text-primary);
+
+    background:
+        var(--color-background);
+
+    border:
+        1px solid
+        var(--color-border);
+
+    border-radius:
+        var(--radius-md);
+
+    outline: none;
+
+    transition:
+        border-color
+        0.2s
+        ease,
+
+        box-shadow
+        0.2s
+        ease;
+
+}
+
+
+.form-field input:focus {
+
+    border-color:
+        var(--color-primary);
+
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            37,
+            99,
+            235,
+            0.1
+        );
+
+}
+
+
+.card-input-wrapper {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding:
+        0
+        14px;
+
+    background:
+        var(--color-background);
+
+    border:
+        1px solid
+        var(--color-border);
+
+    border-radius:
+        var(--radius-md);
+
+}
+
+
+.card-input-wrapper:focus-within {
+
+    border-color:
+        var(--color-primary);
+
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            37,
+            99,
+            235,
+            0.1
+        );
+
+}
+
+
+.card-input-wrapper svg {
+
+    color:
+        var(--color-text-secondary);
+
+}
+
+
+.card-input-wrapper input {
+
+    padding:
+        0;
+
+    border: none;
+
+    box-shadow: none;
+
+}
+
+
+.card-input-wrapper input:focus {
+
+    box-shadow: none;
+
+}
+
+
+.card-form-row {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        1fr;
+
+    gap: 14px;
+
+}
+
+
+.payment-security-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    color:
+        var(--color-success);
+
+    background:
+        rgba(
+            22,
+            163,
+            74,
+            0.08
+        );
+
+    border-radius:
+        var(--radius-md);
+
+    font-size: 0.8rem;
+
+}
+
+
+.pay-now-button {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    min-height: 52px;
+
+    color: white;
+
+    background:
+        var(--color-primary);
+
+    border: none;
+
+    border-radius:
+        var(--radius-md);
+
+    font-weight: 700;
+
+    transition:
+        transform
+        0.2s
+        ease,
+
+        box-shadow
+        0.2s
+        ease;
+
+}
+
+
+.pay-now-button:hover:not(:disabled) {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0
+        10px
+        20px
+        rgba(
+            37,
+            99,
+            235,
+            0.25
+        );
+
+}
+
+
+.pay-now-button:disabled {
+
+    cursor: not-allowed;
+
+    opacity: 0.7;
+
+}
+
+
+.cancel-payment-button {
+
+    min-height: 44px;
+
+    color:
+        var(--color-text-secondary);
+
+    background:
+        transparent;
+
+    border: none;
+
+    font-weight: 600;
+
+}
+
+
+.payment-spinner {
+
+    animation:
+        spin
+        1s
+        linear
+        infinite;
+
+}
+
+
+@keyframes cardFloat {
+
+    0%,
+    100% {
+
+        transform:
+            translateY(0);
+
+    }
+
+    50% {
+
+        transform:
+            translateY(-8px);
+
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    .card-payment-layout {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+    .bank-card {
+
+        max-width: 430px;
+
+        width: 100%;
+
+        margin: 0 auto;
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .card-payment-container {
+
+        padding: 20px;
+
+    }
+
+
+    .card-payment-header {
+
+        flex-direction: column;
+
+    }
+
+
+    .card-form-row {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .card-number-preview {
+
+        font-size: 1.05rem;
+
+    }
+
+}
