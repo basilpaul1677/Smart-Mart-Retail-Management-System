@@ -82,17 +82,41 @@ public class CartServiceImpl implements CartService {
         return convertToResponse(cart);
     }
 
-        @Override
-        public CartResponse getMyCart() 
-        {
-                User user = getLoggedInUser();
-                Cart cart = cartRepository.findByUser(user)
-                                .orElseThrow(() ->
-                                new RuntimeException("Cart is empty"));
+    @Override
+    @Transactional(readOnly = true)
+    public CartResponse getMyCart() {
 
-                calculateCartTotal(cart);
-                return convertToResponse(cart);
-        }
+        User user = getLoggedInUser();
+        /*
+         * If the user does not have a cart yet,
+         * create an empty cart.
+         */
+
+        Cart cart =
+                cartRepository
+                        .findByUser(user)
+                        .orElseGet(
+                                () -> {
+                                    Cart newCart = new Cart();
+                                    newCart.setUser(user);
+                                    newCart.setTotalAmount(
+                                            BigDecimal.ZERO
+                                    );
+                                    return cartRepository.save(
+                                            newCart
+                                    );
+                                }
+                        );
+        /*
+         * Return the cart.
+         *
+         * If there are no items,
+         * items will be an empty list.
+         */
+
+        return convertToResponse(cart);
+
+    }
 
 @Override
 @Transactional
@@ -219,50 +243,85 @@ public void clearCart() {
     /**
      * Convert Cart Entity to Response DTO
      */
-    private CartResponse convertToResponse(Cart cart) {
+private CartResponse convertToResponse(Cart cart) {
 
-        List<CartItemResponse> items = cart.getCartItems()
+    List<CartItemResponse> items = cart.getCartItems()
 
-                .stream()
+            .stream()
 
-                .map(item ->
+            .map(item ->
 
-                        CartItemResponse.builder()
+                    CartItemResponse.builder()
 
-                                .cartItemId(item.getId())
+                            .cartItemId(
+                                    item.getId()
+                            )
 
-                                .productId(item.getProduct().getId())
+                            .productId(
+                                    item.getProduct().getId()
+                            )
 
-                                .productName(item.getProduct().getName())
+                            .name(
+                                    item.getProduct().getName()
+                            )
 
-                                .quantity(item.getQuantity())
+                            .imageUrl(
+                                    item.getProduct().getImageUrl()
+                            )
 
-                                .price(item.getPrice())
+                            .quantity(
+                                    item.getQuantity()
+                            )
 
-                                .subtotal(
-                                        item.getPrice()
-                                                .multiply(
-                                                        BigDecimal.valueOf(
-                                                                item.getQuantity()
-                                                        )
-                                                )
-                                )
+                            .price(
+                                    item.getPrice()
+                            )
 
-                                .build()
+                            .subtotal(
 
-                )
+                                    item.getPrice()
 
-                .toList();
+                                            .multiply(
 
-        return CartResponse.builder()
+                                                    BigDecimal.valueOf(
 
-                .cartId(cart.getId())
+                                                            item.getQuantity()
 
-                .items(items)
+                                                    )
 
-                .totalAmount(cart.getTotalAmount())
+                                            )
 
-                .build();
-    }
+                            )
+
+                            .build()
+
+            )
+
+            .toList();
+
+
+    return CartResponse.builder()
+
+            .cartId(
+
+                    cart.getId()
+
+            )
+
+            .items(
+
+                    items
+
+            )
+
+            .totalAmount(
+
+                    cart.getTotalAmount()
+
+            )
+
+            .build();
+
+}
 
 }

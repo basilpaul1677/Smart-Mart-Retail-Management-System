@@ -2,16 +2,13 @@ package com.basil.shoppingcart.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.http.HttpMethod;
-
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -34,10 +31,16 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(
-            HttpSecurity http) throws Exception {
+            HttpSecurity http
+    ) throws Exception {
 
         http
-                .csrf(AbstractHttpConfigurer::disable)
+
+                .cors(cors -> {})
+
+                .csrf(
+                        AbstractHttpConfigurer::disable
+                )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -48,67 +51,63 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         /*
-                         * Public APIs
+                         * CORS Preflight
+                         */
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        )
+                        .permitAll()
+
+                        /*
+                         * Public Authentication
                          */
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
                         /*
-                         * Public Product Read APIs
+                         * ADMIN ONLY
                          */
                         .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/products",
-                                "/api/products/**"
-                        ).permitAll()
+                                "/api/admin/**"
+                        )
+                        .hasRole("ADMIN")
 
                         /*
-                         * Admin Product APIs
+                         * Everything Else
                          */
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/products"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/products/**"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/products/**"
-                        ).hasRole("ADMIN")
-
-                        /*
-                         * All remaining APIs require authentication
-                         */
-                        .anyRequest().authenticated()
+                        .anyRequest()
+                        .authenticated()
                 )
 
-                .authenticationProvider(authenticationProvider)
+                .authenticationProvider(
+                        authenticationProvider
+                )
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
 
+                .httpBasic(
+                        httpBasic ->
+                                httpBasic.disable()
+                )
+
+                .formLogin(
+                        form ->
+                                form.disable()
+                )
+
                 .exceptionHandling(exception ->
                         exception.authenticationEntryPoint(
                                 authenticationEntryPoint
                         )
-                )
-
-                .httpBasic(httpBasic ->
-                        httpBasic.disable()
-                )
-
-                .formLogin(form ->
-                        form.disable()
                 );
 
         return http.build();

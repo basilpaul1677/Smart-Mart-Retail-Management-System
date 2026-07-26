@@ -31,3 +31,17 @@ spring:
 
     init:
       mode: never
+
+  
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: basilpaulose58@gmail.com
+    password: basilpaulose58@123
+
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

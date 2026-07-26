@@ -1,15 +1,17 @@
 package com.basil.shoppingcart.service;
 
+
 import java.util.List;
 
+import com.basil.shoppingcart.dto.request.CheckoutRequest;
 import com.basil.shoppingcart.dto.response.OrderResponse;
 
-public interface OrderService {
 
-    OrderResponse checkout();
+public interface OrderService 
+{
+    OrderResponse checkout(CheckoutRequest request);
 
     List<OrderResponse> getMyOrders();
-
     OrderResponse getOrder(Long orderId);
 
     List<OrderResponse> getAllOrders();

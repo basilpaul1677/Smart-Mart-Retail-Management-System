@@ -9,15 +9,17 @@ import lombok.Data;
 @Builder
 public class CartItemResponse {
 
-    private Long cartItemId;
+private Long cartItemId;
 
-    private Long productId;
+private Long productId;
 
-    private String productName;
+private String name;
 
-    private Integer quantity;
+private String imageUrl;
 
-    private BigDecimal price;
+private Integer quantity;
 
-    private BigDecimal subtotal;
+private BigDecimal price;
+
+private BigDecimal subtotal;
 }

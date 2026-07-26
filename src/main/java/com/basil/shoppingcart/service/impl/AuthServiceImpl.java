@@ -22,96 +22,395 @@ import com.basil.shoppingcart.repository.RoleRepository;
 import com.basil.shoppingcart.repository.UserRepository;
 import com.basil.shoppingcart.security.JwtService;
 import com.basil.shoppingcart.service.AuthService;
+import com.basil.shoppingcart.service.EmailService;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.basil.shoppingcart.dto.request.ForgotPasswordRequest;
+import com.basil.shoppingcart.dto.request.ResetPasswordRequest;
+import com.basil.shoppingcart.model.PasswordResetToken;
+import com.basil.shoppingcart.repository.PasswordResetTokenRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AuthServiceImpl implements AuthService {
+public class AuthServiceImpl
+        implements AuthService {
+
 
     private final UserRepository userRepository;
 
+
     private final RoleRepository roleRepository;
+
 
     private final UserMapper userMapper;
 
+
     private final PasswordEncoder passwordEncoder;
+
 
     private final AuthenticationManager authenticationManager;
 
+
     private final JwtService jwtService;
 
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+
+    private final EmailService emailService;
+
     @Override
-    public UserResponse register(RegisterRequest request) {
+    public UserResponse register(
 
-        log.info("Registration request received for email: {}", request.getEmail());
+            RegisterRequest request
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+    ) {
 
-            log.warn("Registration failed. Email already exists: {}", request.getEmail());
+
+        log.info(
+
+                "Registration request received for email: {}",
+
+                request.getEmail()
+
+        );
+
+
+        if (
+
+                userRepository.existsByEmail(
+
+                        request.getEmail()
+
+                )
+
+        ) {
+
+
+            log.warn(
+
+                    "Registration failed. Email already exists: {}",
+
+                    request.getEmail()
+
+            );
+
 
             throw new DuplicateResourceException(
+
                     "Email already exists."
+
             );
 
         }
 
-        Role customerRole = roleRepository.findByRoleName(RoleType.ROLE_CUSTOMER)
-                .orElseThrow(() -> {
 
-                    log.error("ROLE_CUSTOMER not found in database.");
+        Role customerRole =
 
-                    return new ResourceNotFoundException(
-                            "Customer role not found."
-                    );
+                roleRepository
 
-                });
+                        .findByRoleName(
 
-        User user = userMapper.toUser(request);
+                                RoleType.ROLE_CUSTOMER
+
+                        )
+
+                        .orElseThrow(() -> {
+
+
+                            log.error(
+
+                                    "ROLE_CUSTOMER not found in database."
+
+                            );
+
+
+                            return new ResourceNotFoundException(
+
+                                    "Customer role not found."
+
+                            );
+
+                        });
+
+
+        User user =
+
+                userMapper.toUser(
+
+                        request
+
+                );
+
 
         user.setPassword(
-                passwordEncoder.encode(request.getPassword())
+
+                passwordEncoder.encode(
+
+                        request.getPassword()
+
+                )
+
         );
 
-        user.setRole(customerRole);
 
-        user.setEnabled(true);
+        user.setRole(
 
-        user.setAccountNonLocked(true);
+                customerRole
 
-        User savedUser = userRepository.save(user);
+        );
 
-        log.info("User registered successfully with id: {}", savedUser.getId());
 
-        return userMapper.toUserResponse(savedUser);
+        user.setEnabled(
+
+                true
+
+        );
+
+
+        user.setAccountNonLocked(
+
+                true
+
+        );
+
+
+        User savedUser =
+
+                userRepository.save(
+
+                        user
+
+                );
+
+
+        log.info(
+
+                "User registered successfully with id: {}",
+
+                savedUser.getId()
+
+        );
+
+
+        return userMapper.toUserResponse(
+
+                savedUser
+
+        );
 
     }
 
     @Override
-    public JwtResponse login(LoginRequest request) {
+public void forgotPassword(
+        ForgotPasswordRequest request
+) {
 
-        log.info("Login request received for email: {}", request.getEmail());
+    String email =
+            request
+                    .getEmail()
+                    .trim()
+                    .toLowerCase();
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
+    userRepository
+            .findByEmail(email)
+            .ifPresent(user -> {
+
+                passwordResetTokenRepository
+                        .deleteByUser(user);
+
+                PasswordResetToken resetToken =
+                        new PasswordResetToken();
+
+                resetToken.setToken(
+                        UUID.randomUUID()
+                                .toString()
+                );
+
+                resetToken.setUser(user);
+
+                resetToken.setExpiryDate(
+                        LocalDateTime.now()
+                                .plusMinutes(15)
+                );
+
+                resetToken.setUsed(
+                        false
+                );
+
+                passwordResetTokenRepository
+                        .save(resetToken);
+
+                String resetLink =
+                        "http://localhost:5173/reset-password?token="
+                                + resetToken.getToken();
+
+                emailService
+                        .sendPasswordResetEmail(
+                                user.getEmail(),
+                                resetLink
+                        );
+            });
+}
+
+        @Override
+public void resetPassword(
+        ResetPasswordRequest request
+) {
+
+    PasswordResetToken resetToken =
+            passwordResetTokenRepository
+                    .findByToken(
+                            request.getToken()
+                    )
+                    .orElseThrow(
+                            () ->
+                                    new RuntimeException(
+                                            "Invalid password reset token"
+                                    )
+                    );
+
+    if (
+            resetToken.isUsed()
+    ) {
+
+        throw new RuntimeException(
+                "Password reset token has already been used"
+        );
+    }
+
+    if (
+            resetToken
+                    .getExpiryDate()
+                    .isBefore(
+                            LocalDateTime.now()
+                    )
+    ) {
+
+        throw new RuntimeException(
+                "Password reset token has expired"
+        );
+    }
+
+    User user =
+            resetToken.getUser();
+
+    user.setPassword(
+            passwordEncoder.encode(
+                    request.getNewPassword()
+            )
+    );
+
+    userRepository.save(
+            user
+    );
+
+    resetToken.setUsed(
+            true
+    );
+
+    passwordResetTokenRepository.save(
+            resetToken
+    );
+}
+
+
+    @Override
+    public JwtResponse login(
+
+            LoginRequest request
+
+    ) {
+
+
+        log.info(
+
+                "Login request received for email: {}",
+
+                request.getEmail()
+
         );
 
+
+        Authentication authentication =
+
+                authenticationManager.authenticate(
+
+                        new UsernamePasswordAuthenticationToken(
+
+                                request.getEmail(),
+
+                                request.getPassword()
+
+                        )
+
+                );
+
+
         UserDetails userDetails =
-                (UserDetails) authentication.getPrincipal();
 
-        String token = jwtService.generateToken(userDetails);
+                (UserDetails)
 
-        log.info("Login successful for email: {}", request.getEmail());
+                        authentication.getPrincipal();
+
+
+        String token =
+
+                jwtService.generateToken(
+
+                        userDetails
+
+                );
+
+
+        String role =
+
+                userDetails
+
+                        .getAuthorities()
+
+                        .stream()
+
+                        .findFirst()
+
+                        .map(
+
+                                authority ->
+
+                                        authority.getAuthority()
+
+                        )
+
+                        .orElse(
+
+                                null
+
+                        );
+
+
+        log.info(
+
+                "Login successful for email: {}",
+
+                request.getEmail()
+
+        );
+
 
         return new JwtResponse(
+
                 token,
-                "Bearer"
+
+                "Bearer",
+
+                role
+
         );
 
     }

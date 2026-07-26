@@ -11,11 +11,31 @@ import org.springframework.stereotype.Repository;
 import com.basil.shoppingcart.model.Product;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long>,JpaSpecificationExecutor<Product> 
-{
+public interface ProductRepository
+        extends JpaRepository<Product, Long>,
+                JpaSpecificationExecutor<Product> {
 
     List<Product> findByActiveTrue();
 
-    Page<Product> findByActiveTrue(Pageable pageable);
+    Page<Product> findByActiveTrue(
+            Pageable pageable
+    );
 
+    long countByActiveTrue();
+
+    long countByQuantityLessThanAndActiveTrue(
+            Integer quantity
+    );
+
+    long countByQuantityEqualsAndActiveTrue(
+            Integer quantity
+    );
+
+    List<Product> findByQuantityLessThanAndActiveTrue(
+            Integer quantity
+    );
+
+    List<Product> findByQuantityEqualsAndActiveTrue(
+            Integer quantity
+    );
 }

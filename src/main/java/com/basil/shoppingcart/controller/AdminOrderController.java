@@ -3,13 +3,19 @@ package com.basil.shoppingcart.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.basil.shoppingcart.dto.request.OrderStatusUpdateRequest;
+import com.basil.shoppingcart.dto.request.UpdateOrderStatusRequest;
 import com.basil.shoppingcart.dto.response.OrderResponse;
-import com.basil.shoppingcart.service.OrderService;
+import com.basil.shoppingcart.service.AdminOrderService;
 
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -17,26 +23,70 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminOrderController {
 
-    private final OrderService orderService;
+    private final AdminOrderService adminOrderService;
+
+    /*
+     * =========================================
+     * VIEW ALL ORDERS
+     * =========================================
+     */
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+    public ResponseEntity<List<OrderResponse>>
+    getAllOrders() {
 
         return ResponseEntity.ok(
-                orderService.getAllOrders()
+                adminOrderService
+                        .getAllOrders()
         );
     }
 
-    @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderResponse> updateStatus(
-            @PathVariable Long orderId,
-            @Valid @RequestBody OrderStatusUpdateRequest request) {
+    /*
+     * =========================================
+     * VIEW ORDER BY ID
+     * =========================================
+     */
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse>
+    getOrderById(
+
+            @PathVariable
+            Long orderId
+    ) {
 
         return ResponseEntity.ok(
-                orderService.updateOrderStatus(
-                        orderId,
-                        request.getStatus()
-                )
+                adminOrderService
+                        .getOrderById(
+                                orderId
+                        )
+        );
+    }
+
+    /*
+     * =========================================
+     * UPDATE ORDER STATUS
+     * =========================================
+     */
+
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<OrderResponse>
+    updateOrderStatus(
+
+            @PathVariable
+            Long orderId,
+
+            @Valid
+            @RequestBody
+            UpdateOrderStatusRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                adminOrderService
+                        .updateOrderStatus(
+                                orderId,
+                                request
+                        )
         );
     }
 }
