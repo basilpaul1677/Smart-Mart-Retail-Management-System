@@ -1,90 +1,74 @@
 import {
-
     createContext,
-
     useContext,
-
     useEffect,
-
     useMemo,
-
     useState
-
 } from "react";
 
-
-import cartService
-
-    from "../services/cartService";
-
+import cartService from "../services/cartService";
 
 import {
-
     useToast
-
 } from "./ToastContext";
 
-
 import {
-
     useAuth
-
 } from "./AuthContext";
 
-
 const CartContext =
-
     createContext(null);
 
-
 export const CartProvider = ({
-
     children
-
 }) => {
 
-
     const {
-
-        isAuthenticated
-
+        isAuthenticated,
+        hasRole
     } = useAuth();
 
 
     const [
-
         cartItems,
-
         setCartItems
-
     ] = useState([]);
 
 
     const [
-
         isLoading,
-
         setIsLoading
-
     ] = useState(false);
 
 
     const [
-
         updatingItemId,
-
         setUpdatingItemId
-
     ] = useState(null);
 
 
     const {
-
         success,
-
         error
-
     } = useToast();
+
+
+    /*
+     * =========================
+     * Customer Access
+     * =========================
+     *
+     * Admin users should not
+     * load or manage a cart.
+     */
+
+    const isAdmin =
+        hasRole("ROLE_ADMIN");
+
+
+    const canUseCart =
+        isAuthenticated &&
+        !isAdmin;
 
 
     /*
@@ -95,8 +79,7 @@ export const CartProvider = ({
 
     const loadCart = async () => {
 
-
-        if (!isAuthenticated) {
+        if (!canUseCart) {
 
             setCartItems([]);
 
@@ -113,7 +96,6 @@ export const CartProvider = ({
 
 
             const cart =
-
                 await cartService.getCart();
 
 
@@ -171,12 +153,21 @@ export const CartProvider = ({
     };
 
 
+    /*
+     * =========================
+     * Load Cart On Auth Change
+     * =========================
+     */
+
     useEffect(
 
         () => {
 
+            if (
 
-            if (isAuthenticated) {
+                canUseCart
+
+            ) {
 
                 loadCart();
 
@@ -190,12 +181,13 @@ export const CartProvider = ({
 
             }
 
-
         },
 
         [
 
-            isAuthenticated
+            isAuthenticated,
+
+            isAdmin
 
         ]
 
@@ -217,11 +209,11 @@ export const CartProvider = ({
     ) => {
 
 
-        if (!isAuthenticated) {
+        if (!canUseCart) {
 
             error(
 
-                "Please login to add products to your cart."
+                "Please login as a customer to add products to your cart."
 
             );
 
@@ -305,11 +297,11 @@ export const CartProvider = ({
     ) => {
 
 
-        if (!isAuthenticated) {
+        if (!canUseCart) {
 
             error(
 
-                "Please login to manage your cart."
+                "Please login as a customer to manage your cart."
 
             );
 
@@ -414,11 +406,11 @@ export const CartProvider = ({
     ) => {
 
 
-        if (!isAuthenticated) {
+        if (!canUseCart) {
 
             error(
 
-                "Please login to manage your cart."
+                "Please login as a customer to manage your cart."
 
             );
 
@@ -514,6 +506,13 @@ export const CartProvider = ({
     const clearCart = async () => {
 
 
+        if (!canUseCart) {
+
+            return;
+
+        }
+
+
         try {
 
 
@@ -566,7 +565,6 @@ export const CartProvider = ({
 
         () =>
 
-
             cartItems.reduce(
 
                 (
@@ -609,7 +607,6 @@ export const CartProvider = ({
     const totalAmount = useMemo(
 
         () =>
-
 
             cartItems.reduce(
 
@@ -698,7 +695,6 @@ export const CartProvider = ({
 
 
 export const useCart = () => {
-
 
     const context =
 

@@ -38,39 +38,25 @@ public class OrderController {
             "/checkout"
     )
     public ResponseEntity<OrderResponse> checkout(
-
             @Valid
             @RequestBody
             CheckoutRequest request
-
     ) {
 
-
         return ResponseEntity.ok(
-
                 orderService.checkout(
-
                         request
-
                 )
-
         );
 
     }
-
 
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getOrders() {
-
-
         return ResponseEntity.ok(
-
                 orderService.getMyOrders()
-
         );
-
     }
-
 
     @GetMapping(
             "/admin"
@@ -82,9 +68,7 @@ public class OrderController {
 
 
         return ResponseEntity.ok(
-
                 orderService.getAllOrders()
-
         );
     }
 

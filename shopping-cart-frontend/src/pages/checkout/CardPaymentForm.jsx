@@ -29,8 +29,6 @@ function CardPaymentForm({
 
     const {
 
-        success,
-
         error
 
     } = useToast();
@@ -86,6 +84,15 @@ function CardPaymentForm({
         showCvv,
 
         setShowCvv
+
+    ] = useState(false);
+
+
+    const [
+
+        paymentCompleted,
+
+        setPaymentCompleted
 
     ] = useState(false);
 
@@ -357,14 +364,12 @@ function CardPaymentForm({
     };
 
 
-    const handleSubmit = (
-
-        event
-
-    ) => {
+    const handlePayNow = () => {
 
 
-        event.preventDefault();
+        if (paymentCompleted) {
+            return;
+        }
 
 
         if (
@@ -397,29 +402,19 @@ function CardPaymentForm({
                 );
 
 
-                success(
-
-                    "Payment completed successfully."
-
-                );
+                setPaymentCompleted(true);
 
 
-                onPaymentSuccess({
-
-                    cardHolderName,
-
-                    cardNumber:
-
-                        cardNumber.slice(
-
-                            -4
-
-                        ),
-
-                    amount
-
-                });
-
+                if (typeof onPaymentSuccess === "function") {
+                    onPaymentSuccess({
+                        cardHolderName,
+                        cardNumber:
+                            cardNumber.slice(
+                                -4
+                            ),
+                        amount: Number(amount || 0)
+                    });
+                }
 
             },
 
@@ -428,6 +423,14 @@ function CardPaymentForm({
         );
 
     };
+
+
+    const formattedAmount =
+        Number(
+            amount || 0
+        ).toLocaleString(
+            "en-IN"
+        );
 
 
     const maskedCardNumber = cardNumber
@@ -481,6 +484,7 @@ function CardPaymentForm({
 
                     </p>
 
+
                 </div>
 
 
@@ -511,11 +515,6 @@ function CardPaymentForm({
             >
 
 
-                {/* =========================
-                    CARD PREVIEW
-                ========================== */}
-
-
                 <div
 
                     className={
@@ -523,7 +522,6 @@ function CardPaymentForm({
                         showCvv
 
                             ? "bank-card card-flipped"
-
                             : "bank-card"
 
                     }
@@ -544,7 +542,6 @@ function CardPaymentForm({
                     {
 
                         !showCvv
-
                             ? (
 
                                 <div
@@ -612,11 +609,9 @@ function CardPaymentForm({
                                                 {
 
                                                     cardHolderName
-
                                                         .toUpperCase()
 
                                                         ||
-
                                                         "YOUR NAME"
 
                                                 }
@@ -640,9 +635,7 @@ function CardPaymentForm({
                                                 {
 
                                                     expiryDate
-
                                                     ||
-
                                                     "MM/YY"
 
                                                 }
@@ -697,13 +690,9 @@ function CardPaymentForm({
                                             {
 
                                                 cvv
-
                                                     ?
-
                                                     cvv
-
                                                     :
-
                                                     "•••"
 
                                             }
@@ -730,20 +719,9 @@ function CardPaymentForm({
                 </div>
 
 
-                {/* =========================
-                    PAYMENT FORM
-                ========================== */}
-
-
-                <form
+                <div
 
                     className="card-payment-form"
-
-                    onSubmit={
-
-                        handleSubmit
-
-                    }
 
                 >
 
@@ -790,15 +768,11 @@ function CardPaymentForm({
 
                                 }
 
-                                placeholder=
-
-                                    "1234 5678 9012 3456"
+                                placeholder="1234 5678 9012 3456"
 
                                 inputMode="numeric"
 
-                                autoComplete=
-
-                                    "cc-number"
+                                autoComplete="cc-number"
 
                             />
 
@@ -840,13 +814,9 @@ function CardPaymentForm({
 
                             }
 
-                            placeholder=
+                            placeholder="Basil Paul"
 
-                                "Basil Paul"
-
-                            autoComplete=
-
-                                "cc-name"
+                            autoComplete="cc-name"
 
                         />
 
@@ -889,15 +859,11 @@ function CardPaymentForm({
 
                                 }
 
-                                placeholder=
-
-                                    "MM/YY"
+                                placeholder="MM/YY"
 
                                 inputMode="numeric"
 
-                                autoComplete=
-
-                                    "cc-exp"
+                                autoComplete="cc-exp"
 
                             />
 
@@ -943,15 +909,11 @@ function CardPaymentForm({
 
                                 }
 
-                                placeholder=
-
-                                    "123"
+                                placeholder="123"
 
                                 inputMode="numeric"
 
-                                autoComplete=
-
-                                    "cc-csc"
+                                autoComplete="cc-csc"
 
                             />
 
@@ -985,13 +947,20 @@ function CardPaymentForm({
 
                     <button
 
-                        type="submit"
+                        type="button"
 
                         className="pay-now-button"
 
+                        onClick={
+
+                            handlePayNow
+
+                        }
+
                         disabled={
 
-                            isProcessing
+                            isProcessing ||
+                            paymentCompleted
 
                         }
 
@@ -1001,7 +970,6 @@ function CardPaymentForm({
                         {
 
                             isProcessing
-
                                 ? (
 
                                     <>
@@ -1010,9 +978,7 @@ function CardPaymentForm({
 
                                             size={20}
 
-                                            className=
-
-                                                "payment-spinner"
+                                            className="payment-spinner"
 
                                         />
 
@@ -1021,36 +987,40 @@ function CardPaymentForm({
                                     </>
 
                                 )
+                                : paymentCompleted
+                                    ? (
 
-                                : (
+                                        <>
 
-                                    <>
+                                            <ShieldCheck
+                                                size={18}
+                                            />
 
-                                        <LockKeyhole
+                                            Payment Completed
+                                        </>
 
-                                            size={18}
+                                    )
+                                    : (
 
-                                        />
+                                        <>
 
-                                        Pay ₹
+                                            <LockKeyhole
 
-                                        {
+                                                size={18}
 
-                                            Number(
+                                            />
 
-                                                amount
+                                            Pay ₹
 
-                                            ).toLocaleString(
+                                            {
 
-                                                "en-IN"
+                                                formattedAmount
 
-                                            )
+                                            }
 
-                                        }
+                                        </>
 
-                                    </>
-
-                                )
+                                    )
 
                         }
 
@@ -1082,7 +1052,7 @@ function CardPaymentForm({
                     </button>
 
 
-                </form>
+                </div>
 
 
             </div>

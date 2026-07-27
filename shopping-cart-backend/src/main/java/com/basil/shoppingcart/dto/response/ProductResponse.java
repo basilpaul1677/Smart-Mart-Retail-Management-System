@@ -2,6 +2,7 @@ package com.basil.shoppingcart.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -20,7 +21,16 @@ public class ProductResponse {
 
     private Integer quantity;
 
+    /*
+     * Primary / cover image.
+     * Kept for backward compatibility.
+     */
     private String imageUrl;
+
+    /*
+     * Full image gallery.
+     */
+    private List<String> imageUrls;
 
     private String brand;
 

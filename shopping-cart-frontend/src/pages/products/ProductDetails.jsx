@@ -19,6 +19,7 @@ import {
 
 import {
     useEffect,
+    useMemo,
     useState
 } from "react";
 
@@ -39,192 +40,114 @@ import {
     useToast
 } from "../../context/ToastContext";
 
-
 function ProductDetails() {
-
-
-    const {
-        id
-    } = useParams();
-
-
-    const navigate =
-        useNavigate();
-
+    const { id } = useParams();
+    const navigate = useNavigate();
 
     const {
         success,
         error: showToastError
     } = useToast();
 
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [quantity, setQuantity] = useState(1);
+    const [addedToCart, setAddedToCart] = useState(false);
 
-    const [
-        product,
-        setProduct
-    ] = useState(null);
-
-
-    const [
-        loading,
-        setLoading
-    ] = useState(true);
-
-
-    const [
-        error,
-        setError
-    ] = useState(null);
-
-
-    const [
-        quantity,
-        setQuantity
-    ] = useState(1);
-
-
-    const [
-        addedToCart,
-        setAddedToCart
-    ] = useState(false);
-
-
-    const [
-        reviews,
-        setReviews
-    ] = useState([]);
-
-
-    const [
-        reviewSummary,
-        setReviewSummary
-    ] = useState({
+    const [reviews, setReviews] = useState([]);
+    const [reviewSummary, setReviewSummary] = useState({
         averageRating: 0,
         totalReviews: 0
     });
+    const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [reviewsError, setReviewsError] = useState(null);
 
-
-    const [
-        reviewsLoading,
-        setReviewsLoading
-    ] = useState(true);
-
-
-    const [
-        reviewsError,
-        setReviewsError
-    ] = useState(null);
-
-
-    const [
-        reviewForm,
-        setReviewForm
-    ] = useState({
+    const [reviewForm, setReviewForm] = useState({
         rating: 5,
         comment: ""
     });
+    const [reviewFormErrors, setReviewFormErrors] = useState({});
+    const [submittingReview, setSubmittingReview] = useState(false);
 
+    const [selectedImage, setSelectedImage] = useState("");
 
-    const [
-        reviewFormErrors,
-        setReviewFormErrors
-    ] = useState({});
+    const { addToCart } = useCart();
+    const { isAuthenticated } = useAuth();
 
+    const galleryImages = useMemo(() => {
+        if (!product) return [];
 
-    const [
-        submittingReview,
-        setSubmittingReview
-    ] = useState(false);
+        const images = [];
+        const pushUnique = (url) => {
+            const normalized = (url || "").trim();
+            if (normalized && !images.includes(normalized)) {
+                images.push(normalized);
+            }
+        };
 
-
-    const {
-        addToCart
-    } = useCart();
-
-
-    const {
-        isAuthenticated
-    } = useAuth();
-
-
-    const loadProduct = async () => {
-
-        try {
-
-            setLoading(true);
-
-            setError(null);
-
-
-            const data =
-                await productService
-                    .getProductById(id);
-
-
-            setProduct(data);
-
+        if (Array.isArray(product.imageUrls)) {
+            product.imageUrls.forEach(pushUnique);
         }
 
-        catch (err) {
+        pushUnique(product.imageUrl);
 
-            console.error(
-                "Failed to load product:",
-                err
-            );
+        return images;
+    }, [product]);
 
+    const displayedImage = selectedImage || galleryImages[0] || "";
 
+    const loadProduct = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const data = await productService.getProductById(id);
+            setProduct(data);
+
+            const images = [];
+            if (Array.isArray(data?.imageUrls)) {
+                data.imageUrls.forEach((url) => {
+                    const normalized = (url || "").trim();
+                    if (normalized && !images.includes(normalized)) {
+                        images.push(normalized);
+                    }
+                });
+            }
+            if (data?.imageUrl && !images.includes(data.imageUrl.trim())) {
+                images.push(data.imageUrl.trim());
+            }
+
+            setSelectedImage(images[0] || "");
+        } catch (err) {
+            console.error("Failed to load product:", err);
             setError(
                 err.response?.data?.message ||
                 "Unable to load product details."
             );
-
-        }
-
-        finally {
-
+        } finally {
             setLoading(false);
-
         }
-
     };
 
-
     const loadReviews = async () => {
-
         try {
-
             setReviewsLoading(true);
-
             setReviewsError(null);
 
-
-            const [
-                reviewsResult,
-                summaryResult
-            ] = await Promise.allSettled([
-
+            const [reviewsResult, summaryResult] = await Promise.allSettled([
                 reviewService.getProductReviews(id),
-
                 reviewService.getReviewSummary(id)
-
             ]);
 
-
-            if (
-                reviewsResult.status === "fulfilled"
-            ) {
+            if (reviewsResult.status === "fulfilled") {
                 setReviews(reviewsResult.value || []);
             } else {
                 setReviews([]);
-                console.error(
-                    "Failed to load reviews:",
-                    reviewsResult.reason
-                );
+                console.error("Failed to load reviews:", reviewsResult.reason);
             }
 
-
-            if (
-                summaryResult.status === "fulfilled"
-            ) {
+            if (summaryResult.status === "fulfilled") {
                 setReviewSummary(
                     summaryResult.value || {
                         averageRating: 0,
@@ -242,821 +165,359 @@ function ProductDetails() {
                 );
             }
 
-
             if (
                 reviewsResult.status === "rejected" &&
                 summaryResult.status === "rejected"
             ) {
-                setReviewsError(
-                    "Unable to load reviews right now."
-                );
+                setReviewsError("Unable to load reviews right now.");
             }
-
-        }
-
-        catch (reviewErr) {
-
-            console.error(
-                "Unexpected review load error:",
-                reviewErr
-            );
-
-            setReviewsError(
-                "Unable to load reviews right now."
-            );
-
-        }
-
-        finally {
-
+        } catch (reviewErr) {
+            console.error("Unexpected review load error:", reviewErr);
+            setReviewsError("Unable to load reviews right now.");
+        } finally {
             setReviewsLoading(false);
-
         }
-
     };
 
+    useEffect(() => {
+        loadProduct();
+    }, [id]);
 
-    useEffect(
-        () => {
-            loadProduct();
-        },
-        [
-            id
-        ]
-    );
-
-
-    useEffect(
-        () => {
-            if (id) {
-                loadReviews();
-            }
-        },
-        [
-            id
-        ]
-    );
-
+    useEffect(() => {
+        if (id) {
+            loadReviews();
+        }
+    }, [id]);
 
     const increaseQuantity = () => {
-
-
-        if (
-            product &&
-            quantity < product.quantity
-        ) {
-            setQuantity(
-                previousQuantity =>
-                    previousQuantity + 1
-            );
+        if (product && quantity < product.quantity) {
+            setQuantity(previousQuantity => previousQuantity + 1);
         }
-
     };
-
 
     const decreaseQuantity = () => {
-
-
-        if (
-            quantity > 1
-        ) {
-            setQuantity(
-                previousQuantity =>
-                    previousQuantity - 1
-            );
+        if (quantity > 1) {
+            setQuantity(previousQuantity => previousQuantity - 1);
         }
-
     };
 
-
     const handleAddToCart = async () => {
-
-
-        /*
-         * Guest user protection
-         */
-
         if (!isAuthenticated) {
-
-            navigate(
-                "/login",
-                {
-                    state: {
-                        from:
-                            `/products/${id}`,
-                        message:
-                            "Please login to add products to your cart."
-                    }
+            navigate("/login", {
+                state: {
+                    from: `/products/${id}`,
+                    message: "Please login to add products to your cart."
                 }
-            );
-
+            });
             return;
-
         }
 
-
-        const successResult =
-            await addToCart(
-                product,
-                quantity
-            );
-
+        const successResult = await addToCart(product, quantity);
 
         if (successResult) {
             setAddedToCart(true);
         }
-
     };
 
-
     const validateReviewForm = () => {
-
-
         const errors = {};
-
 
         if (
             !reviewForm.rating ||
             reviewForm.rating < 1 ||
             reviewForm.rating > 5
         ) {
-            errors.rating =
-                "Please select a rating from 1 to 5";
+            errors.rating = "Please select a rating from 1 to 5";
         }
 
-
-        if (
-            !reviewForm.comment.trim()
-        ) {
-            errors.comment =
-                "Comment is required";
-        } else if (
-            reviewForm.comment.trim().length < 5
-        ) {
-            errors.comment =
-                "Comment must contain at least 5 characters";
+        if (!reviewForm.comment.trim()) {
+            errors.comment = "Comment is required";
+        } else if (reviewForm.comment.trim().length < 5) {
+            errors.comment = "Comment must contain at least 5 characters";
         }
-
 
         setReviewFormErrors(errors);
-
-
-        return (
-            Object.keys(errors).length === 0
-        );
-
+        return Object.keys(errors).length === 0;
     };
 
-
-    const handleReviewSubmit = async (
-        event
-    ) => {
-
+    const handleReviewSubmit = async (event) => {
         event.preventDefault();
 
-
-        if (
-            !isAuthenticated
-        ) {
-
-            navigate(
-                "/login",
-                {
-                    state: {
-                        from:
-                            `/products/${id}`,
-                        message:
-                            "Please login to review this product."
-                    }
+        if (!isAuthenticated) {
+            navigate("/login", {
+                state: {
+                    from: `/products/${id}`,
+                    message: "Please login to review this product."
                 }
-            );
-
-            return;
-
-        }
-
-
-        if (
-            !validateReviewForm()
-        ) {
+            });
             return;
         }
 
+        if (!validateReviewForm()) {
+            return;
+        }
 
         try {
-
             setSubmittingReview(true);
 
+            await reviewService.createReview(id, {
+                rating: Number(reviewForm.rating),
+                comment: reviewForm.comment.trim()
+            });
 
-            await reviewService.createReview(
-                id,
-                {
-                    rating: Number(reviewForm.rating),
-                    comment: reviewForm.comment.trim()
-                }
-            );
-
-
-            success(
-                "Review submitted successfully"
-            );
-
+            success("Review submitted successfully");
 
             setReviewForm({
                 rating: 5,
                 comment: ""
             });
 
-
             setReviewFormErrors({});
-
-
             await loadReviews();
-
-        }
-
-        catch (reviewError) {
-
-            console.error(
-                "Failed to submit review:",
-                reviewError
-            );
-
-
+        } catch (reviewError) {
+            console.error("Failed to submit review:", reviewError);
             showToastError(
                 reviewError?.response?.data?.message ||
                 "Unable to submit review"
             );
-
-        }
-
-        finally {
-
+        } finally {
             setSubmittingReview(false);
-
         }
-
     };
 
-
-    const renderStars = (
-        rating,
-        size = 16
-    ) => {
-
-        const roundedRating =
-            Math.round(Number(rating || 0));
-
+    const renderStars = (rating, size = 16) => {
+        const roundedRating = Math.round(Number(rating || 0));
 
         return (
             <div className="review-stars">
-                {
-                    Array.from(
-                        { length: 5 }
-                    ).map(
-                        (
-                            _,
-                            index
-                        ) => {
+                {Array.from({ length: 5 }).map((_, index) => {
+                    const starValue = index + 1;
+                    const isFilled = starValue <= roundedRating;
 
-                            const starValue =
-                                index + 1;
-
-                            const isFilled =
-                                starValue <=
-                                roundedRating;
-
-                            return (
-                                <Star
-                                    key={
-                                        starValue
-                                    }
-                                    size={
-                                        size
-                                    }
-                                    fill={
-                                        isFilled
-                                            ? "currentColor"
-                                            : "none"
-                                    }
-                                    className={
-                                        isFilled
-                                            ? "star-filled"
-                                            : "star-empty"
-                                    }
-                                />
-                            );
-
-                        }
-                    )
-                }
+                    return (
+                        <Star
+                            key={starValue}
+                            size={size}
+                            fill={isFilled ? "currentColor" : "none"}
+                            className={isFilled ? "star-filled" : "star-empty"}
+                        />
+                    );
+                })}
             </div>
         );
-
     };
 
-
     if (loading) {
-
         return (
-
-            <main
-                className=
-                    "product-details-page page"
-            >
-
-                <div
-                    className=
-                        "container"
-                >
-
-                    <div
-                        className=
-                            "product-details-loading"
-                    >
-
-                        <div
-                            className=
-                                "details-skeleton-image"
-                        />
-
-
-                        <div
-                            className=
-                                "details-skeleton-content"
-                        >
-
-                            <div
-                                className=
-                                    "skeleton-line"
-                            />
-
-
-                            <div
-                                className=
-                                    "skeleton-line skeleton-title"
-                            />
-
-
-                            <div
-                                className=
-                                    "skeleton-line skeleton-price"
-                            />
-
-
-                            <div
-                                className=
-                                    "skeleton-line"
-                            />
-
-
-                            <div
-                                className=
-                                    "skeleton-line"
-                            />
-
+            <main className="product-details-page page">
+                <div className="container">
+                    <div className="product-details-loading">
+                        <div className="details-skeleton-image" />
+                        <div className="details-skeleton-content">
+                            <div className="skeleton-line" />
+                            <div className="skeleton-line skeleton-title" />
+                            <div className="skeleton-line skeleton-price" />
+                            <div className="skeleton-line" />
+                            <div className="skeleton-line" />
                         </div>
-
                     </div>
-
                 </div>
-
             </main>
-
         );
-
     }
-
 
     if (error || !product) {
-
         return (
+            <main className="product-details-page page">
+                <div className="container">
+                    <div className="product-details-error">
+                        <Package size={56} />
 
-            <main
-                className=
-                    "product-details-page page"
-            >
-
-                <div
-                    className=
-                        "container"
-                >
-
-                    <div
-                        className=
-                            "product-details-error"
-                    >
-
-                        <Package
-                            size={56}
-                        />
-
-
-                        <h2>
-
-                            Product Not Found
-
-                        </h2>
-
+                        <h2>Product Not Found</h2>
 
                         <p>
-
-                            {
-                                error ||
-                                "This product is no longer available."
-                            }
-
+                            {error || "This product is no longer available."}
                         </p>
 
-
-                        <Link
-                            to="/products"
-                            className=
-                                "primary-button"
-                        >
-
-                            <ArrowLeft
-                                size={18}
-                            />
-
+                        <Link to="/products" className="primary-button">
+                            <ArrowLeft size={18} />
                             Back to Products
-
                         </Link>
-
                     </div>
-
                 </div>
-
             </main>
-
         );
-
     }
 
-
-    const isInStock =
-        product.quantity > 0;
-
+    const isInStock = product.quantity > 0;
 
     return (
-
-        <main
-            className=
-                "product-details-page page"
-        >
-
-            <div
-                className=
-                    "container"
-            >
-
-
-                <Link
-                    to="/products"
-                    className=
-                        "back-to-products"
-                >
-
-                    <ArrowLeft
-                        size={18}
-                    />
-
+        <main className="product-details-page page">
+            <div className="container">
+                <Link to="/products" className="back-to-products">
+                    <ArrowLeft size={18} />
                     Back to Products
-
                 </Link>
 
-
-                <section
-                    className=
-                        "product-details-layout"
-                >
-
-
-                    <div
-                        className=
-                            "product-details-image-section"
-                    >
-
-                        <div
-                            className=
-                                "product-details-image-wrapper"
-                        >
-
-                            {
-                                product.imageUrl
-                                    ?
-
+                <section className="product-details-layout">
+                    <div className="product-details-image-section">
+                        <div className="product-details-image-gallery">
+                            <div className="product-details-image-wrapper">
+                                {displayedImage ? (
                                     <img
-                                        src={
-                                            product.imageUrl
-                                        }
-                                        alt={
-                                            product.name
-                                        }
-                                        className=
-                                            "product-details-image"
+                                        src={displayedImage}
+                                        alt={product.name}
+                                        className="product-details-image"
                                     />
-
-                                    :
-
-                                    <div
-                                        className=
-                                            "product-details-image-placeholder"
-                                    >
-
-                                        <Package
-                                            size={100}
-                                        />
-
+                                ) : (
+                                    <div className="product-details-image-placeholder">
+                                        <Package size={100} />
                                     </div>
-                            }
+                                )}
+                            </div>
 
+                            {galleryImages.length > 1 && (
+                                <div className="product-image-thumbnails">
+                                    {galleryImages.map((url) => (
+                                        <button
+                                            key={url}
+                                            type="button"
+                                            className={
+                                                url === displayedImage
+                                                    ? "product-image-thumb active"
+                                                    : "product-image-thumb"
+                                            }
+                                            onClick={() => setSelectedImage(url)}
+                                            aria-label="View product image"
+                                        >
+                                            <img src={url} alt={product.name} />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-
                     </div>
 
-
-                    <div
-                        className=
-                            "product-details-content"
-                    >
-
-
-                        {
-                            product.category &&
-                            <span
-                                className=
-                                    "product-details-category"
-                            >
-                                {
-                                    product.category
-                                }
+                    <div className="product-details-content">
+                        {product.category && (
+                            <span className="product-details-category">
+                                {product.category}
                             </span>
-                        }
+                        )}
 
+                        <h1>{product.name}</h1>
 
-                        <h1>
-                            {
-                                product.name
-                            }
-                        </h1>
-
-
-                        {
-                            product.brand &&
-                            <p
-                                className=
-                                    "product-details-brand"
-                            >
+                        {product.brand && (
+                            <p className="product-details-brand">
                                 Brand:
-                                <strong>
-                                    {
-                                        product.brand
-                                    }
-                                </strong>
+                                <strong>{product.brand}</strong>
                             </p>
-                        }
+                        )}
 
-
-                        <p
-                            className=
-                                "product-details-description"
-                        >
-                            {
-                                product.description ||
-                                "No description available for this product."
-                            }
+                        <p className="product-details-description">
+                            {product.description ||
+                                "No description available for this product."}
                         </p>
-
 
                         <div className="product-rating-summary">
                             <div className="product-rating-score">
                                 <strong>
-                                    {
-                                        Number(
-                                            reviewSummary.averageRating || 0
-                                        ).toFixed(1)
-                                    }
+                                    {Number(
+                                        reviewSummary.averageRating || 0
+                                    ).toFixed(1)}
                                 </strong>
                                 <span>/ 5</span>
                             </div>
 
                             <div className="product-rating-meta">
-                                {
-                                    renderStars(
-                                        reviewSummary.averageRating,
-                                        18
-                                    )
-                                }
+                                {renderStars(reviewSummary.averageRating, 18)}
 
                                 <p>
-                                    {
-                                        Number(
-                                            reviewSummary.totalReviews || 0
-                                        )
-                                    }{" "}
+                                    {Number(reviewSummary.totalReviews || 0)}{" "}
                                     Reviews
                                 </p>
                             </div>
                         </div>
 
-
-                        <div
-                            className=
-                                "product-details-price"
-                        >
-                            ₹
-                            {
-                                Number(
-                                    product.price
-                                ).toLocaleString(
-                                    "en-IN"
-                                )
-                            }
+                        <div className="product-details-price">
+                            ₹{Number(product.price).toLocaleString("en-IN")}
                         </div>
-
 
                         <div
                             className={
                                 isInStock
-                                    ?
-                                    "product-stock in-stock"
-                                    :
-                                    "product-stock out-of-stock"
+                                    ? "product-stock in-stock"
+                                    : "product-stock out-of-stock"
                             }
                         >
+                            <span className="stock-indicator" />
 
-                            <span
-                                className=
-                                    "stock-indicator"
-                            />
-
-
-                            {
-                                isInStock
-                                    ?
-                                    `${product.quantity} units available`
-                                    :
-                                    "Out of Stock"
-                            }
-
+                            {isInStock
+                                ? `${product.quantity} units available`
+                                : "Out of Stock"}
                         </div>
 
-
-                        {
-                            isInStock &&
+                        {isInStock && (
                             <>
+                                <div className="quantity-section">
+                                    <span>Quantity</span>
 
+                                    <div className="quantity-control">
+                                        <button
+                                            type="button"
+                                            onClick={decreaseQuantity}
+                                            disabled={quantity === 1}
+                                        >
+                                            <Minus size={16} />
+                                        </button>
 
-                                <div
-                                    className=
-                                        "quantity-section"
-                                >
-
-                                    <span>
-
-                                        Quantity
-
-                                    </span>
-
-
-                                    <div
-                                        className=
-                                            "quantity-control"
-                                    >
+                                        <span>{quantity}</span>
 
                                         <button
                                             type="button"
-                                            onClick={
-                                                decreaseQuantity
-                                            }
-                                            disabled={
-                                                quantity === 1
-                                            }
+                                            onClick={increaseQuantity}
+                                            disabled={quantity >= product.quantity}
                                         >
-
-                                            <Minus
-                                                size={16}
-                                            />
-
+                                            <Plus size={16} />
                                         </button>
-
-
-                                        <span>
-                                            {
-                                                quantity
-                                            }
-                                        </span>
-
-
-                                        <button
-                                            type="button"
-                                            onClick={
-                                                increaseQuantity
-                                            }
-                                            disabled={
-                                                quantity >=
-                                                product.quantity
-                                            }
-                                        >
-
-                                            <Plus
-                                                size={16}
-                                            />
-
-                                        </button>
-
                                     </div>
-
                                 </div>
-
 
                                 <button
                                     type="button"
-                                    className=
-                                        "add-to-cart-button"
-                                    onClick={
-                                        handleAddToCart
-                                    }
+                                    className="add-to-cart-button"
+                                    onClick={handleAddToCart}
                                 >
-
-                                    <ShoppingCart
-                                        size={20}
-                                    />
-
-                                    {
-                                        isAuthenticated
-                                            ?
-                                            "Add to Cart"
-                                            :
-                                            "Login to Add to Cart"
-                                    }
-
+                                    <ShoppingCart size={20} />
+                                    {isAuthenticated
+                                        ? "Add to Cart"
+                                        : "Login to Add to Cart"}
                                 </button>
 
-
-                                {
-                                    addedToCart &&
+                                {addedToCart && (
                                     <button
                                         type="button"
-                                        className=
-                                            "view-cart-button"
-                                        onClick={() =>
-                                            navigate(
-                                                "/cart"
-                                            )
-                                        }
+                                        className="view-cart-button"
+                                        onClick={() => navigate("/cart")}
                                     >
-
-                                        <Eye
-                                            size={20}
-                                        />
-
+                                        <Eye size={20} />
                                         View Cart
-
                                     </button>
-                                }
-
+                                )}
                             </>
-                        }
+                        )}
 
-
-                        <div
-                            className=
-                                "product-trust-features"
-                        >
-
+                        <div className="product-trust-features">
                             <div>
-
-                                <ShieldCheck
-                                    size={20}
-                                />
-
-                                <span>
-
-                                    Secure Shopping
-
-                                </span>
-
+                                <ShieldCheck size={20} />
+                                <span>Secure Shopping</span>
                             </div>
 
-
                             <div>
-
-                                <Package
-                                    size={20}
-                                />
-
-                                <span>
-
-                                    Quality Products
-
-                                </span>
-
+                                <Package size={20} />
+                                <span>Quality Products</span>
                             </div>
-
                         </div>
-
 
                         <section className="product-reviews-section">
                             <div className="product-reviews-header">
@@ -1073,20 +534,17 @@ function ProductDetails() {
 
                                 <div className="product-reviews-summary-card">
                                     <strong>
-                                        {
-                                            Number(
-                                                reviewSummary.averageRating || 0
-                                            ).toFixed(1)
-                                        }/5
+                                        {Number(
+                                            reviewSummary.averageRating || 0
+                                        ).toFixed(1)}
+                                        /5
                                     </strong>
                                     <div>
                                         {renderStars(reviewSummary.averageRating, 15)}
                                         <span>
-                                            {
-                                                Number(
-                                                    reviewSummary.totalReviews || 0
-                                                )
-                                            }{" "}
+                                            {Number(
+                                                reviewSummary.totalReviews || 0
+                                            )}{" "}
                                             total reviews
                                         </span>
                                     </div>
@@ -1115,7 +573,9 @@ function ProductDetails() {
                                             >
                                                 <div className="product-review-top">
                                                     <div>
-                                                        <strong>{review.userName}</strong>
+                                                        <strong>
+                                                            {review.userName}
+                                                        </strong>
                                                         <p>
                                                             {new Date(
                                                                 review.createdAt
@@ -1147,46 +607,53 @@ function ProductDetails() {
                                 </div>
 
                                 {isAuthenticated ? (
-                                    <form onSubmit={handleReviewSubmit} className="product-review-form">
+                                    <form
+                                        onSubmit={handleReviewSubmit}
+                                        className="product-review-form"
+                                    >
                                         <div className="form-group">
                                             <label>Rating</label>
                                             <div className="review-rating-picker">
-                                                {Array.from({ length: 5 }).map((_, index) => {
-                                                    const starValue = index + 1;
-                                                    const isActive =
-                                                        starValue <=
-                                                        Number(reviewForm.rating || 0);
+                                                {Array.from({ length: 5 }).map(
+                                                    (_, index) => {
+                                                        const starValue = index + 1;
+                                                        const isActive =
+                                                            starValue <=
+                                                            Number(
+                                                                reviewForm.rating || 0
+                                                            );
 
-                                                    return (
-                                                        <button
-                                                            key={starValue}
-                                                            type="button"
-                                                            className={
-                                                                isActive
-                                                                    ? "review-rating-button active"
-                                                                    : "review-rating-button"
-                                                            }
-                                                            onClick={() =>
-                                                                setReviewForm(
-                                                                    previous => ({
-                                                                        ...previous,
-                                                                        rating: starValue
-                                                                    })
-                                                                )
-                                                            }
-                                                            aria-label={`Rate ${starValue} star${starValue > 1 ? "s" : ""}`}
-                                                        >
-                                                            <Star
-                                                                size={20}
-                                                                fill={
+                                                        return (
+                                                            <button
+                                                                key={starValue}
+                                                                type="button"
+                                                                className={
                                                                     isActive
-                                                                        ? "currentColor"
-                                                                        : "none"
+                                                                        ? "review-rating-button active"
+                                                                        : "review-rating-button"
                                                                 }
-                                                            />
-                                                        </button>
-                                                    );
-                                                })}
+                                                                onClick={() =>
+                                                                    setReviewForm(
+                                                                        previous => ({
+                                                                            ...previous,
+                                                                            rating: starValue
+                                                                        })
+                                                                    )
+                                                                }
+                                                                aria-label={`Rate ${starValue} star${starValue > 1 ? "s" : ""}`}
+                                                            >
+                                                                <Star
+                                                                    size={20}
+                                                                    fill={
+                                                                        isActive
+                                                                            ? "currentColor"
+                                                                            : "none"
+                                                                    }
+                                                                />
+                                                            </button>
+                                                        );
+                                                    }
+                                                )}
                                                 <span className="review-rating-value">
                                                     {reviewForm.rating}/5
                                                 </span>
@@ -1210,7 +677,8 @@ function ProductDetails() {
                                                 onChange={(event) =>
                                                     setReviewForm(previous => ({
                                                         ...previous,
-                                                        comment: event.target.value
+                                                        comment:
+                                                            event.target.value
                                                     }))
                                                 }
                                             />
@@ -1231,27 +699,25 @@ function ProductDetails() {
                                             disabled={submittingReview}
                                         >
                                             <Send size={18} />
-                                            {submittingReview ? "Submitting..." : "Submit Review"}
+                                            {submittingReview
+                                                ? "Submitting..."
+                                                : "Submit Review"}
                                         </button>
                                     </form>
                                 ) : (
                                     <div className="review-login-box">
-                                        <p>
-                                            Please login to write a review.
-                                        </p>
+                                        <p>Please login to write a review.</p>
                                         <button
                                             type="button"
                                             className="add-to-cart-button"
                                             onClick={() =>
-                                                navigate(
-                                                    "/login",
-                                                    {
-                                                        state: {
-                                                            from: `/products/${id}`,
-                                                            message: "Please login to review this product."
-                                                        }
+                                                navigate("/login", {
+                                                    state: {
+                                                        from: `/products/${id}`,
+                                                        message:
+                                                            "Please login to review this product."
                                                     }
-                                                )
+                                                })
                                             }
                                         >
                                             Login to Review
@@ -1260,18 +726,11 @@ function ProductDetails() {
                                 )}
                             </div>
                         </section>
-
                     </div>
-
                 </section>
-
             </div>
-
         </main>
-
     );
-
 }
-
 
 export default ProductDetails;

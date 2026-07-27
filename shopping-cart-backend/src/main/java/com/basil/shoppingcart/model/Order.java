@@ -38,14 +38,12 @@ public class Order extends BaseEntity {
     )
     private User user;
 
-
     @Column(
             nullable = false,
             precision = 12,
             scale = 2
     )
     private BigDecimal totalAmount;
-
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -54,7 +52,6 @@ public class Order extends BaseEntity {
     )
     private OrderStatus status;
 
-
     @Enumerated(EnumType.STRING)
     @Column(
             nullable = false,
@@ -62,13 +59,11 @@ public class Order extends BaseEntity {
     )
     private PaymentMethod paymentMethod;
 
-
     @Column(
             nullable = false,
             length = 150
     )
     private String fullName;
-
 
     @Column(
             nullable = false,
@@ -76,13 +71,11 @@ public class Order extends BaseEntity {
     )
     private String email;
 
-
     @Column(
             nullable = false,
             length = 20
     )
     private String phoneNumber;
-
 
     @Column(
             nullable = false,
@@ -90,13 +83,11 @@ public class Order extends BaseEntity {
     )
     private String addressLine;
 
-
     @Column(
             nullable = false,
             length = 100
     )
     private String city;
-
 
     @Column(
             nullable = false,
@@ -104,13 +95,11 @@ public class Order extends BaseEntity {
     )
     private String state;
 
-
     @Column(
             nullable = false,
             length = 10
     )
     private String postalCode;
-
 
     @OneToMany(
             mappedBy = "order",
@@ -118,5 +107,4 @@ public class Order extends BaseEntity {
             orphanRemoval = true
     )
     private List<OrderItem> orderItems = new ArrayList<>();
-
 }

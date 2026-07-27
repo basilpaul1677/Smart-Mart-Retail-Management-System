@@ -33,7 +33,7 @@ function AdminEditProduct() {
         description: "",
         price: "",
         quantity: "",
-        imageUrl: "",
+        imageUrlsText: "",
         brand: "",
         category: "",
         active: true
@@ -52,12 +52,18 @@ function AdminEditProduct() {
 
             const product = await productService.getProductById(id);
 
+            const existingImages = Array.isArray(product.imageUrls)
+                ? product.imageUrls.filter(Boolean)
+                : product.imageUrl
+                    ? [product.imageUrl]
+                    : [];
+
             setFormData({
                 name: product.name || "",
                 description: product.description || "",
                 price: product.price ?? "",
                 quantity: product.quantity ?? "",
-                imageUrl: product.imageUrl || "",
+                imageUrlsText: existingImages.join("\n"),
                 brand: product.brand || "",
                 category: product.category || "",
                 active: product.active ?? true
@@ -86,8 +92,16 @@ function AdminEditProduct() {
         }));
     };
 
+    const parseImageUrls = (text) => {
+        return text
+            .split(/[\n,]+/)
+            .map((url) => url.trim())
+            .filter(Boolean);
+    };
+
     const validateForm = () => {
         const errors = {};
+        const imageUrls = parseImageUrls(formData.imageUrlsText);
 
         if (!formData.name.trim()) {
             errors.name = "Product name is required";
@@ -105,8 +119,8 @@ function AdminEditProduct() {
             errors.quantity = "Quantity cannot be negative";
         }
 
-        if (formData.imageUrl && formData.imageUrl.length > 500) {
-            errors.imageUrl = "Image URL must not exceed 500 characters";
+        if (formData.imageUrlsText && imageUrls.length > 10) {
+            errors.imageUrlsText = "You can add up to 10 image links";
         }
 
         if (formData.brand && formData.brand.length > 100) {
@@ -136,10 +150,18 @@ function AdminEditProduct() {
         try {
             setSaving(true);
 
+            const imageUrls = parseImageUrls(formData.imageUrlsText);
+
             const payload = {
-                ...formData,
+                name: formData.name,
+                description: formData.description,
                 price: Number(formData.price),
-                quantity: Number(formData.quantity)
+                quantity: Number(formData.quantity),
+                imageUrl: imageUrls[0] || "",
+                imageUrls,
+                brand: formData.brand,
+                category: formData.category,
+                active: formData.active
             };
 
             await productService.updateProduct(id, payload);
@@ -313,22 +335,27 @@ function AdminEditProduct() {
                             )}
                         </div>
 
-                        <div className="admin-field">
-                            <label htmlFor="imageUrl">Image URL</label>
-                            <div className="admin-input">
+                        <div className="admin-field admin-field-full">
+                            <label htmlFor="imageUrlsText">
+                                Image Links
+                            </label>
+                            <div className="admin-input admin-textarea">
                                 <ImageIcon size={16} />
-                                <input
-                                    id="imageUrl"
-                                    name="imageUrl"
-                                    type="text"
-                                    value={formData.imageUrl}
+                                <textarea
+                                    id="imageUrlsText"
+                                    name="imageUrlsText"
+                                    rows="4"
+                                    value={formData.imageUrlsText}
                                     onChange={handleChange}
-                                    placeholder="Enter image URL"
+                                    placeholder="Paste image links one per line or separated by commas"
                                 />
                             </div>
-                            {formErrors.imageUrl && (
+                            <small className="admin-field-hint">
+                                The first link will be used as the cover image.
+                            </small>
+                            {formErrors.imageUrlsText && (
                                 <span className="field-error">
-                                    {formErrors.imageUrl}
+                                    {formErrors.imageUrlsText}
                                 </span>
                             )}
                         </div>

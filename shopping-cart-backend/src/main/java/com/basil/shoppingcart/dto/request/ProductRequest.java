@@ -1,12 +1,14 @@
 package com.basil.shoppingcart.dto.request;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Data
@@ -40,11 +42,25 @@ public class ProductRequest {
     )
     private Integer quantity;
 
+    /*
+     * Legacy single-image field.
+     * Still supported so existing UI does not break.
+     */
     @Size(
             max = 500,
             message = "Image URL must not exceed 500 characters"
     )
     private String imageUrl;
+
+    /*
+     * New multiple image links.
+     * The cover image will be the first URL in this list.
+     */
+    @Size(
+            max = 10,
+            message = "You can add up to 10 image links"
+    )
+    private List<String> imageUrls;
 
     @Size(
             max = 100,

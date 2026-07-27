@@ -114,34 +114,6 @@ function Checkout() {
     ] = useState({});
 
 
-    const [
-
-        cardDetails,
-
-        setCardDetails
-
-    ] = useState({
-
-        cardNumber: "",
-
-        cardHolderName: "",
-
-        expiryDate: "",
-
-        cvv: ""
-
-    });
-
-
-    const [
-
-        cardErrors,
-
-        setCardErrors
-
-    ] = useState({});
-
-
     const deliveryCharge =
 
         totalAmount >= 1000
@@ -217,6 +189,11 @@ function Checkout() {
 
         );
 
+    };
+
+
+    const handlePaymentMethodChange = (method) => {
+        setPaymentMethod(method);
     };
 
 
@@ -376,132 +353,104 @@ function Checkout() {
     };
 
 
-    const validateCardDetails = () => {
+    const buildOrderPayload = () => ({
 
-        const errors = {};
+        fullName: formData.fullName.trim(),
+
+        email: formData.email.trim(),
+
+        phoneNumber: formData.phoneNumber.trim(),
+
+        addressLine: formData.addressLine.trim(),
+
+        city: formData.city.trim(),
+
+        state: formData.state.trim(),
+
+        postalCode: formData.postalCode.trim(),
+
+        paymentMethod: paymentMethod
+
+    });
 
 
-        const cardNumber =
+    const placeOrder = async () => {
 
-            cardDetails.cardNumber.replace(
+        const orderPayload = buildOrderPayload();
 
-                /\s/g,
 
-                ""
+        console.log(
+
+            "Order Payload:",
+
+            orderPayload
+
+        );
+
+
+        const createdOrder =
+
+            await orderService.createOrder(
+
+                orderPayload
 
             );
 
 
-        if (
+        success(
 
-            !cardNumber
+            "Order placed successfully"
 
-        ) {
-
-            errors.cardNumber =
-
-                "Card number is required";
-
-        }
-
-        else if (
-
-            !/^[0-9]{16}$/.test(
-
-                cardNumber
-
-            )
-
-        ) {
-
-            errors.cardNumber =
-
-                "Enter a valid 16-digit card number";
-
-        }
+        );
 
 
-        if (
-
-            !cardDetails.cardHolderName.trim()
-
-        ) {
-
-            errors.cardHolderName =
-
-                "Cardholder name is required";
-
-        }
+        clearCart();
 
 
-        if (
+        navigate(
 
-            !cardDetails.expiryDate
-
-        ) {
-
-            errors.expiryDate =
-
-                "Expiry date is required";
-
-        }
-
-
-        if (
-
-            !cardDetails.cvv
-
-        ) {
-
-            errors.cvv =
-
-                "CVV is required";
-
-        }
-
-        else if (
-
-            !/^[0-9]{3,4}$/.test(
-
-                cardDetails.cvv
-
-            )
-
-        ) {
-
-            errors.cvv =
-
-                "Enter a valid CVV";
-
-        }
-
-
-        setCardErrors(errors);
-
-
-        return (
-
-            Object.keys(errors).length === 0
+            `/orders/${createdOrder.orderId}`
 
         );
 
     };
 
 
-    const handleCardChange = (
+    const handlePaymentSuccess = async () => {
 
-        updatedCardDetails
+        try {
 
-    ) => {
+            setIsSubmitting(true);
 
-        setCardDetails(
+            await placeOrder();
 
-            updatedCardDetails
+        }
 
-        );
+        catch (submitError) {
 
+            console.error(
+                "Order creation failed after payment:",
+                submitError
+            );
 
-        setCardErrors({});
+            const backendMessage =
+                submitError.response?.data?.message;
+
+            error(
+
+                backendMessage ||
+
+                "Payment completed, but order placement failed. Please contact support or try again."
+
+            );
+
+        }
+
+        finally {
+
+            setIsSubmitting(false);
+
+        }
 
     };
 
@@ -563,124 +512,27 @@ function Checkout() {
         }
 
 
-        if (
-
-            paymentMethod === "ONLINE"
-
-        ) {
-
-            const isCardValid =
-
-                validateCardDetails();
-
-
-            if (
-
-                !isCardValid
-
-            ) {
-
-                error(
-
-                    "Please enter valid card details"
-
-                );
-
-
-                return;
-
-            }
-
+        /*
+         * COD:
+         * Place order directly.
+         *
+         * ONLINE:
+         * Order is placed after the card payment is completed
+         * in CardPaymentForm.
+         */
+        if (paymentMethod === "ONLINE") {
+            error(
+                "Please complete the card payment below to place your order."
+            );
+            return;
         }
 
 
         try {
 
-
             setIsSubmitting(true);
 
-
-            /*
-             * IMPORTANT
-             *
-             * These property names must exactly match
-             * CheckoutRequest.java in Spring Boot.
-             *
-             * Do not send formData as a nested object.
-             */
-
-
-            const orderPayload = {
-
-                fullName:
-
-                    formData.fullName.trim(),
-
-                email:
-
-                    formData.email.trim(),
-
-                phoneNumber:
-
-                    formData.phoneNumber.trim(),
-
-                addressLine:
-
-                    formData.addressLine.trim(),
-
-                city:
-
-                    formData.city.trim(),
-
-                state:
-
-                    formData.state.trim(),
-
-                postalCode:
-
-                    formData.postalCode.trim(),
-
-                paymentMethod:
-
-                    paymentMethod
-
-            };
-
-
-            console.log(
-
-                "Order Payload:",
-
-                orderPayload
-
-            );
-
-
-            const createdOrder =
-
-                await orderService.createOrder(
-
-                    orderPayload
-
-                );
-
-
-            success(
-
-                "Order placed successfully"
-
-            );
-
-
-            clearCart();
-
-
-            navigate(
-
-                `/orders/${createdOrder.orderId}`
-
-            );
-
+            await placeOrder();
 
         }
 
@@ -689,7 +541,6 @@ function Checkout() {
             submitError
 
         ) {
-
 
             console.error(
 
@@ -1516,7 +1367,7 @@ function Checkout() {
 
                                             event =>
 
-                                                setPaymentMethod(
+                                                handlePaymentMethodChange(
 
                                                     event.target.value
 
@@ -1599,7 +1450,7 @@ function Checkout() {
 
                                             event =>
 
-                                                setPaymentMethod(
+                                                handlePaymentMethodChange(
 
                                                     event.target.value
 
@@ -1654,21 +1505,21 @@ function Checkout() {
 
                                 <CardPaymentForm
 
-                                    cardDetails={
+                                    amount={grandTotal}
 
-                                        cardDetails
+                                    onPaymentSuccess={
 
-                                    }
-
-                                    onChange={
-
-                                        handleCardChange
+                                        handlePaymentSuccess
 
                                     }
 
-                                    errors={
+                                    onCancel={() =>
 
-                                        cardErrors
+                                        handlePaymentMethodChange(
+
+                                            "COD"
+
+                                        )
 
                                     }
 
@@ -1989,8 +1840,9 @@ function Checkout() {
                                     isSubmitting
 
                                         ? "Processing..."
-
-                                        : "Place Order"
+                                        : paymentMethod === "ONLINE"
+                                            ? "Complete Card Payment"
+                                            : "Place Order"
 
                                 }
 
